@@ -56,7 +56,8 @@ public class JGitSSHConfigSessionFactory extends org.eclipse.jgit.transport.Jsch
                     if (item instanceof CredentialItem.YesNoType) {
                         ((CredentialItem.YesNoType) item).setValue(true);
                     } else if (item instanceof CredentialItem.StringType) {
-                        ((CredentialItem.StringType) item).setValue(config.getSshPassphrase());
+                        //TOOD: check here!
+                        //((CredentialItem.StringType) item).setValue(config.getSshPassphrase());
                     }
                 }
                 return true;

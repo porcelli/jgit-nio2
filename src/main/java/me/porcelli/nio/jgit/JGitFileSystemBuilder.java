@@ -6,10 +6,10 @@ import java.nio.file.FileSystem;
 import java.util.HashMap;
 import java.util.Map;
 
-import me.porcelli.nio.jgit.daemon.GitDaemon;
+import me.porcelli.nio.jgit.daemon.Daemon;
 import me.porcelli.nio.jgit.impl.JGitFileSystem;
 import me.porcelli.nio.jgit.impl.JGitFileSystemProvider;
-import me.porcelli.nio.jgit.impl.daemon.git.GitDaemonImpl;
+import me.porcelli.nio.jgit.impl.daemon.DaemonImpl;
 
 import static me.porcelli.nio.jgit.impl.JGitFileSystemProviderConfiguration.GIT_ENV_KEY_DEFAULT_REMOTE_NAME;
 import static me.porcelli.nio.jgit.impl.JGitFileSystemProviderConfiguration.GIT_ENV_KEY_FULL_HOST_NAMES;
@@ -34,15 +34,22 @@ public final class JGitFileSystemBuilder {
     }
 
     public static FileSystem newFileSystem(final String repoName,
-                                           final GitDaemon _daemon) throws IOException {
-        final GitDaemonImpl daemon = (GitDaemonImpl) _daemon;
+                                           final Daemon... daemons) throws IOException {
         final Map env = new HashMap<>(DEFAULT_OPTIONS);
-        final Map<String, String> hostNames = new HashMap<>();
-        hostNames.put("git", daemon.fullHostname());
-        env.put(GIT_ENV_KEY_FULL_HOST_NAMES, hostNames);
+        env.put(GIT_ENV_KEY_FULL_HOST_NAMES, buildHostNames(daemons));
         final FileSystem fs = newFileSystem(repoName, env);
-        daemon.accept((JGitFileSystem) fs);
+        for (Daemon daemon : daemons) {
+            ((DaemonImpl) daemon).accept((JGitFileSystem) fs);
+        }
         return fs;
+    }
+
+    private static Map<String, String> buildHostNames(Daemon[] daemons) {
+        final Map<String, String> hostNames = new HashMap<>();
+        for (final Daemon daemon : daemons) {
+            hostNames.put(daemon.protocol(), daemon.fullHostname());
+        }
+        return hostNames;
     }
 
     public static FileSystem newFileSystem(final String repoName,

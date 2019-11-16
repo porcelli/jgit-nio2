@@ -9,14 +9,44 @@ import me.porcelli.nio.jgit.impl.JGitFileSystem;
 public abstract class DaemonImpl implements Daemon {
 
     private final Set<String> accepted = new HashSet<>();
+    private final String hostName;
+    private final String hostAddr;
+    private final int port;
 
-    public abstract String fullHostname();
-
-    public void accept(JGitFileSystem fs) {
-        accepted.add(fs.getName());
+    public DaemonImpl(final String hostAddr,
+                      final String hostName,
+                      final int port){
+        this.hostName = hostName;
+        this.hostAddr = hostAddr;
+        this.port = port;
     }
 
     public boolean isAccepted(String name) {
         return accepted.contains(name);
     }
+
+    public void accept(JGitFileSystem fs) {
+        accepted.add(fs.getName());
+    }
+
+    @Override
+    public String fullHostname() {
+        return hostName() + ":" + hostPort();
+    }
+
+    @Override
+    public String hostName() {
+        return hostName;
+    }
+
+    @Override
+    public String hostAddr() {
+        return hostAddr;
+    }
+
+    @Override
+    public int hostPort() {
+        return port;
+    }
+
 }

@@ -168,13 +168,7 @@ public class JGitFileSystemProvider extends SecuredFileSystemProvider implements
     private static final TimeUnit LOCK_LAST_ACCESS_TIME_UNIT = TimeUnit.SECONDS;
     private static final long LOCK_LAST_ACCESS_THRESHOLD = 10;
 
-//    private final Map<String, String> fullHostNames = new HashMap<>();
-
     private final Object postponedEventsLock = new Object();
-
-    private Daemon daemonService = null;
-
-    private GitSSHService gitSSHService = null;
 
     private FS detectedFS = FS.DETECTED;
 
@@ -232,10 +226,6 @@ public class JGitFileSystemProvider extends SecuredFileSystemProvider implements
         setupGitDefaultCredentials();
 
         setupSSH();
-
-        setupFullHostNames();
-
-        setupGitSSH();
     }
 
     private void setupFSEvents() {
@@ -251,26 +241,6 @@ public class JGitFileSystemProvider extends SecuredFileSystemProvider implements
         config = new JGitFileSystemProviderConfiguration();
 
         loadConfig(gitPrefs);
-    }
-
-    private void setupGitSSH() {
-        if (config.isSshEnabled()) {
-            buildAndStartSSH();
-        } else {
-            gitSSHService = null;
-        }
-    }
-
-    private void setupFullHostNames() {
-        //TODO: needs add to it
-//        if (config.isDaemonEnabled()) {
-//            fullHostNames.put("git",
-//                              config.getDaemonHostName() + ":" + config.getDaemonPort());
-//        }
-//        if (config.isSshEnabled()) {
-//            fullHostNames.put("ssh",
-//                              config.getSshHostName() + ":" + config.getSshPort());
-//        }
     }
 
     private void setupSSH() {
@@ -306,8 +276,6 @@ public class JGitFileSystemProvider extends SecuredFileSystemProvider implements
         }
 
         if (fsManager.allTheFSAreClosed()) {
-            forceStopDaemon();
-            shutdownSSH();
             shutdownEventsManager();
         }
     }
@@ -327,25 +295,8 @@ public class JGitFileSystemProvider extends SecuredFileSystemProvider implements
     }
 
     @Override
-    public void setJAASAuthenticator(AuthenticationService authenticator) {
-        if (gitSSHService != null) {
-            gitSSHService.setUserPassAuthenticator(authenticator);
-        }
-    }
-
-    @Override
     public void setHTTPAuthenticator(final AuthenticationService httpAuthenticator) {
         this.httpAuthenticator = httpAuthenticator;
-    }
-
-    @Override
-    public void setSSHAuthenticator(PublicKeyAuthenticator authenticator) {
-        checkNotNull("authenticator",
-                     authenticator);
-
-        if (gitSSHService != null) {
-            gitSSHService.setPublicKeyAuthenticator(authenticator);
-        }
     }
 
     public JGitFileSystemsManager getFSManager() {
@@ -356,14 +307,6 @@ public class JGitFileSystemProvider extends SecuredFileSystemProvider implements
     public void close() throws IOException {
         shutdown();
     }
-
-//    public void addHostName(final String protocol, String s) {
-//        fullHostNames.put(protocol, s);
-//    }
-
-//    public Map<String, String> getFullHostNames() {
-//        return new HashMap<>(fullHostNames);
-//    }
 
     public class RepositoryResolverImpl<T> implements RepositoryResolver<T> {
 
@@ -400,31 +343,7 @@ public class JGitFileSystemProvider extends SecuredFileSystemProvider implements
         return () -> "ANONYMOUS";
     }
 
-    private void buildAndStartSSH() {
-        final ReceivePackFactory receivePackFactory = (req, db) -> getReceivePack("ssh", req, db);
 
-        final UploadPackFactory uploadPackFactory = (UploadPackFactory<BaseGitCommand>) (req, db) -> new UploadPack(db) {{
-            final JGitFileSystem fs = fsManager.get(db);
-            fs.filterBranchAccess(this,
-                                  req.getUser());
-        }};
-
-        gitSSHService = new GitSSHService();
-
-        gitSSHService.setup(config.getSshFileCertDir(),
-                            InetSocketAddress.createUnresolved(config.getSshHostAddr(),
-                                                               config.getSshPort()),
-                            config.getSshIdleTimeout(),
-                            config.getSshAlgorithm(),
-                            receivePackFactory,
-                            uploadPackFactory,
-                            getRepositoryResolver(),
-                            executorService,
-                            config.getGitSshCiphers(),
-                            config.getGitSshMACs());
-
-        gitSSHService.start();
-    }
 
     public <T> ReceivePack getReceivePack(final String protocol, final T req, final Repository db) {
         return new ReceivePack(db) {
@@ -472,24 +391,11 @@ public class JGitFileSystemProvider extends SecuredFileSystemProvider implements
         return new RepositoryResolverImpl<>();
     }
 
-    private void shutdownSSH() {
-        if (gitSSHService != null) {
-            gitSSHService.stop();
-        }
-    }
-
-    void forceStopDaemon() {
-        if (daemonService != null && daemonService.isRunning()) {
-            daemonService.stop();
-        }
-    }
-
     /**
      * Closes and disposes all open filesystems and stops the Git and SSH daemons if they are running. This filesystem
      * provider can be reactivated by attempting to open a new filesystem or by creating a new filesystem.
      */
     public void shutdown() {
-
         for (JGitFileSystem jGitFileSystem : fsManager.getOpenFileSystems()) {
             try {
                 jGitFileSystem.close();
@@ -497,8 +403,6 @@ public class JGitFileSystemProvider extends SecuredFileSystemProvider implements
                 LOG.error("Failed to close the file system [" + jGitFileSystem.getName() + "].", e);
             }
         }
-        shutdownSSH();
-        forceStopDaemon();
         fsManager.clear();
     }
 
@@ -2537,10 +2441,6 @@ public class JGitFileSystemProvider extends SecuredFileSystemProvider implements
         }
 
         return events;
-    }
-
-    GitSSHService getGitSSHService() {
-        return gitSSHService;
     }
 
     public JGitFileSystemProviderConfiguration getConfig() {

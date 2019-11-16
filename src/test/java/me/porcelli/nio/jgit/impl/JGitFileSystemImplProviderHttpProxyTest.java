@@ -22,12 +22,12 @@ import java.net.Authenticator;
 import java.net.InetAddress;
 import java.net.PasswordAuthentication;
 import java.net.URL;
+import java.util.Collections;
 import java.util.HashMap;
 
 import org.junit.Test;
 
 import static java.net.Authenticator.requestPasswordAuthentication;
-import static me.porcelli.nio.jgit.impl.JGitFileSystemProviderConfiguration.GIT_SSH_ENABLED;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
@@ -43,8 +43,6 @@ public class JGitFileSystemImplProviderHttpProxyTest {
                 "user");
             put("http.proxyPassword",
                 "passwd");
-            put(GIT_SSH_ENABLED,
-                "false");
         }});
 
         final PasswordAuthentication passwdAuth = requestPasswordAuthentication("localhost",
@@ -74,8 +72,6 @@ public class JGitFileSystemImplProviderHttpProxyTest {
                 "user");
             put("https.proxyPassword",
                 "passwd");
-            put(GIT_SSH_ENABLED,
-                "false");
         }});
 
         final PasswordAuthentication passwdAuth = requestPasswordAuthentication("localhost",
@@ -97,9 +93,7 @@ public class JGitFileSystemImplProviderHttpProxyTest {
 
     @Test
     public void testNoProxyInfo() throws IOException {
-        final JGitFileSystemProvider provider = new JGitFileSystemProvider(new HashMap<String, String>() {{
-            put(GIT_SSH_ENABLED, "false");
-        }});
+        final JGitFileSystemProvider provider = new JGitFileSystemProvider(Collections.emptyMap());
 
         {
             final PasswordAuthentication passwdAuth = requestPasswordAuthentication("localhost",

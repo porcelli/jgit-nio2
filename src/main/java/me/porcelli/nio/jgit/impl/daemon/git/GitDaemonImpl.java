@@ -8,27 +8,17 @@ import me.porcelli.nio.jgit.impl.daemon.DaemonImpl;
 public class GitDaemonImpl extends DaemonImpl implements GitDaemon {
 
     private final Daemon daemon;
-    private final String hostName;
 
     public GitDaemonImpl(final Daemon daemon,
+                         final String hostAddr,
                          final String hostName) {
+        super(hostAddr, hostName, daemon.getAddress().getPort());
         this.daemon = daemon;
-        this.hostName = hostName;
     }
 
     @Override
-    public String hostName() {
-        return hostName;
-    }
-
-    @Override
-    public int hostPort() {
-        return daemon.getAddress().getPort();
-    }
-
-    @Override
-    public String fullHostname() {
-        return hostName() + ":" + hostPort();
+    public String protocol() {
+        return GitDaemon.PROTOCOL;
     }
 
     @Override

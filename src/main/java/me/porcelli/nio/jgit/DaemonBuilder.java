@@ -5,7 +5,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import me.porcelli.nio.jgit.daemon.GitDaemon;
-import me.porcelli.nio.jgit.impl.JGitFileSystem;
 import me.porcelli.nio.jgit.impl.daemon.RepositoryResolverImpl;
 import me.porcelli.nio.jgit.impl.daemon.git.Daemon;
 import me.porcelli.nio.jgit.impl.daemon.git.DaemonClient;
@@ -41,7 +40,6 @@ public class DaemonBuilder {
         return setupDaemon(hostPort);
     }
 
-
     private static GitDaemon setupDaemon(int port) {
         return buildAndStartDaemon(DEFAULT_HOST_ADDR,
                                    port,
@@ -49,17 +47,17 @@ public class DaemonBuilder {
     }
 
     static GitDaemon buildAndStartDaemon(final String daemonHostAddr,
-                                      final int daemonPort,
-                                      final ExecutorService executorService) {
+                                         final int daemonPort,
+                                         final ExecutorService executorService) {
         Daemon daemonService = new Daemon(new InetSocketAddress(daemonHostAddr,
                                                                 daemonPort),
                                           executorService);
-        final GitDaemonImpl gitDaemon = new GitDaemonImpl(daemonService, DEFAULT_HOST_NAME);
+        final GitDaemonImpl gitDaemon = new GitDaemonImpl(daemonService, daemonHostAddr, DEFAULT_HOST_NAME);
         daemonService.setRepositoryResolver(new RepositoryResolver<DaemonClient>() {
             @Override
             public Repository open(DaemonClient req, String name)
                     throws RepositoryNotFoundException, ServiceNotAuthorizedException, ServiceNotEnabledException, ServiceMayNotContinueException {
-                if (gitDaemon.isAccepted(name)){
+                if (gitDaemon.isAccepted(name)) {
                     return repositoryResolver.open(req, name);
                 }
                 throw new RepositoryNotFoundException("s");

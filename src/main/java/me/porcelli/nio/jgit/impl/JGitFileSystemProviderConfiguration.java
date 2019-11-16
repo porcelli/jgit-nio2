@@ -37,7 +37,6 @@ public class JGitFileSystemProviderConfiguration {
     public static final String GIT_ENV_KEY_BRANCH_LIST = "branches";
     public static final String GIT_ENV_KEY_SUBDIRECTORY = "subdirectory";
 
-    public static final String GIT_SSH_ENABLED = "nio.git.ssh.enabled";
     public static final String GIT_HTTP_ENABLED = "nio.git.http.enabled";
     public static final String GIT_HTTPS_ENABLED = "nio.git.https.enabled";
 
@@ -53,14 +52,6 @@ public class JGitFileSystemProviderConfiguration {
     public static final String GIT_HTTPS_HOSTNAME = "nio.git.https.hostname";
     public static final String GIT_HTTPS_PORT = "nio.git.https.port";
 
-    public static final String GIT_DAEMON_HOSTNAME = "nio.git.daemon.hostname";
-    public static final String GIT_SSH_HOST = "nio.git.ssh.host";
-    public static final String GIT_SSH_HOSTNAME = "nio.git.ssh.hostname";
-    public static final String GIT_SSH_PORT = "nio.git.ssh.port";
-    public static final String GIT_SSH_CERT_DIR = "nio.git.ssh.cert.dir";
-    public static final String GIT_SSH_IDLE_TIMEOUT = "nio.git.ssh.idle.timeout";
-    public static final String GIT_SSH_ALGORITHM = "nio.git.ssh.algorithm";
-    public static final String GIT_SSH_PASSPHRASE = "nio.git.ssh.passphrase";
     public static final String GIT_GC_LIMIT = "nio.git.gc.limit";
     public static final String GIT_HTTP_SSL_VERIFY = "nio.git.http.sslVerify";
     public static final String SSH_OVER_HTTP = "nio.git.proxy.ssh.over.http";
@@ -88,25 +79,17 @@ public class JGitFileSystemProviderConfiguration {
     public static final String GIT_ENV_KEY_FULL_HOST_NAMES = "fullhostnames";
 
     public static final String SCHEME = "git";
-    public static final String GIT_SSH_CIPHERS = "nio.git.ssh.ciphers";
-    public static final String GIT_SSH_MACS = "nio.git.ssh.macs";
     public static final int SCHEME_SIZE = (SCHEME + "://").length();
     public static final int DEFAULT_SCHEME_SIZE = ("default://").length();
     public static final String DEFAULT_HOST_NAME = "localhost";
     public static final String REPOSITORIES_CONTAINER_DIR = ".niogit";
-    public static final String SSH_FILE_CERT_CONTAINER_DIR = ".security";
     public static final String DEFAULT_SSH_OVER_HTTP = "false";
     public static final String DEFAULT_SSH_OVER_HTTPS = "false";
     public static final String DEFAULT_HOST_ADDR = "127.0.0.1";
-    public static final String DEFAULT_SSH_ENABLED = "true";
     public static final String DEFAULT_HTTP_ENABLED = "true";
     public static final String DEFAULT_HTTPS_ENABLED = "false";
     public static final String DEFAULT_HTTP_PORT = "8080";
     public static final String DEFAULT_HTTPS_PORT = "8443";
-    public static final String DEFAULT_SSH_PORT = "8001";
-    public static final String DEFAULT_SSH_IDLE_TIMEOUT = "10000";
-    public static final String DEFAULT_SSH_ALGORITHM = "RSA";
-    public static final String DEFAULT_SSH_CERT_PASSPHRASE = "";
     public static final String DEFAULT_COMMIT_LIMIT_TO_GC = "20";
     public static final Boolean DEFAULT_GIT_HTTP_SSL_VERIFY = Boolean.TRUE;
     public static final String DEFAULT_ENABLE_GIT_KETCH = "false";
@@ -118,17 +101,6 @@ public class JGitFileSystemProviderConfiguration {
 
     private int commitLimit;
     private boolean sslVerify;
-
-    private boolean sshEnabled;
-    private int sshPort;
-    private String sshHostAddr;
-    private String sshHostName;
-    private File sshFileCertDir;
-    private String sshAlgorithm;
-    private String sshPassphrase;
-    private String sshIdleTimeout;
-    private String gitSshCiphers;
-    private String gitSshMACs;
 
     private boolean httpEnabled;
     private int httpPort;
@@ -196,22 +168,6 @@ public class JGitFileSystemProviderConfiguration {
         final ConfigProperties.ConfigProperty httpsPortProp = systemConfig.get(GIT_HTTPS_PORT,
                                                                                DEFAULT_HTTPS_PORT);
 
-        final ConfigProperties.ConfigProperty sshEnabledProp = systemConfig.get(GIT_SSH_ENABLED,
-                                                                                DEFAULT_SSH_ENABLED);
-        final ConfigProperties.ConfigProperty sshHostProp = systemConfig.get(GIT_SSH_HOST,
-                                                                             DEFAULT_HOST_ADDR);
-        final ConfigProperties.ConfigProperty sshHostNameProp = systemConfig.get(GIT_SSH_HOSTNAME,
-                                                                                 sshHostProp.isDefault() ? DEFAULT_HOST_NAME : sshHostProp.getValue());
-        final ConfigProperties.ConfigProperty sshPortProp = systemConfig.get(GIT_SSH_PORT,
-                                                                             DEFAULT_SSH_PORT);
-        final ConfigProperties.ConfigProperty sshCertDirProp = systemConfig.get(GIT_SSH_CERT_DIR,
-                                                                                currentDirectory);
-        final ConfigProperties.ConfigProperty sshIdleTimeoutProp = systemConfig.get(GIT_SSH_IDLE_TIMEOUT,
-                                                                                    DEFAULT_SSH_IDLE_TIMEOUT);
-        final ConfigProperties.ConfigProperty sshAlgorithmProp = systemConfig.get(GIT_SSH_ALGORITHM,
-                                                                                  DEFAULT_SSH_ALGORITHM);
-        final ConfigProperties.ConfigProperty sshPassphraseProp = systemConfig.get(GIT_SSH_PASSPHRASE,
-                                                                                   DEFAULT_SSH_CERT_PASSPHRASE);
         final ConfigProperties.ConfigProperty commitLimitProp = systemConfig.get(GIT_GC_LIMIT,
                                                                                  DEFAULT_COMMIT_LIMIT_TO_GC);
         final ConfigProperties.ConfigProperty sslVerifyProp = systemConfig.get(GIT_HTTP_SSL_VERIFY,
@@ -251,12 +207,6 @@ public class JGitFileSystemProviderConfiguration {
 
         final ConfigProperties.ConfigProperty jgitCacheEvictThresoldTimeUnitProp = systemConfig.get(JGIT_CACHE_EVICT_THRESHOLD_TIME_UNIT,
                                                                                                     DEFAULT_JGIT_CACHE_EVICT_THRESHOLD_TIME_UNIT.name());
-
-        final ConfigProperties.ConfigProperty jgitSshCiphers = systemConfig.get(GIT_SSH_CIPHERS, null);
-        final ConfigProperties.ConfigProperty jgitSshMacs = systemConfig.get(GIT_SSH_MACS, null);
-
-        gitSshCiphers = jgitSshCiphers.getValue();
-        gitSshMACs = jgitSshMacs.getValue();
 
         sshOverHttpProxy = sshOverHttpProxyProp.getBooleanValue();
         if (sshOverHttpProxy) {
@@ -327,24 +277,6 @@ public class JGitFileSystemProviderConfiguration {
             jgitCacheEvictThresholdTimeUnit = DEFAULT_JGIT_CACHE_EVICT_THRESHOLD_TIME_UNIT;
         }
 
-        sshEnabled = sshEnabledProp.getBooleanValue();
-        if (sshEnabled) {
-            sshPort = sshPortProp.getIntValue();
-            sshHostAddr = sshHostProp.getValue();
-            sshHostName = sshHostNameProp.getValue();
-            sshFileCertDir = new File(sshCertDirProp.getValue(),
-                                      SSH_FILE_CERT_CONTAINER_DIR);
-            sshAlgorithm = sshAlgorithmProp.getValue();
-            sshIdleTimeout = sshIdleTimeoutProp.getValue();
-            try {
-                Integer.valueOf(sshIdleTimeout);
-            } catch (final NumberFormatException exception) {
-                LOG.error("SSH Idle Timeout value is not a valid integer - Parameter is ignored, now using default value.");
-                sshIdleTimeout = DEFAULT_SSH_IDLE_TIMEOUT;
-            }
-        }
-        sshPassphrase = sshPassphraseProp.getValue();
-
         httpEnabled = httpEnabledProp.getBooleanValue();
         if (httpEnabled) {
             httpPort = httpPortProp.getIntValue();
@@ -373,38 +305,6 @@ public class JGitFileSystemProviderConfiguration {
 
     public boolean isSslVerify() {
         return sslVerify;
-    }
-
-    public boolean isSshEnabled() {
-        return sshEnabled;
-    }
-
-    public int getSshPort() {
-        return sshPort;
-    }
-
-    public String getSshHostAddr() {
-        return sshHostAddr;
-    }
-
-    public String getSshHostName() {
-        return sshHostName;
-    }
-
-    public File getSshFileCertDir() {
-        return sshFileCertDir;
-    }
-
-    public String getSshAlgorithm() {
-        return sshAlgorithm;
-    }
-
-    public String getSshPassphrase() {
-        return sshPassphrase;
-    }
-
-    public String getSshIdleTimeout() {
-        return sshIdleTimeout;
     }
 
     public File getGitReposParentDir() {
@@ -509,13 +409,5 @@ public class JGitFileSystemProviderConfiguration {
 
     public long getJgitCacheEvictThresholdDuration() {
         return jgitCacheEvictThresholdDuration;
-    }
-
-    public String getGitSshCiphers() {
-        return gitSshCiphers;
-    }
-
-    public String getGitSshMACs() {
-        return gitSshMACs;
     }
 }
