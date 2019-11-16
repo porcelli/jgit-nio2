@@ -28,7 +28,6 @@ import java.io.OutputStream;
 import java.io.RandomAccessFile;
 import java.io.UnsupportedEncodingException;
 import java.net.Authenticator;
-import java.net.InetSocketAddress;
 import java.net.URI;
 import java.net.URLEncoder;
 import java.nio.ByteBuffer;
@@ -52,7 +51,6 @@ import java.nio.file.NotDirectoryException;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
-import java.nio.file.StandardOpenOption;
 import java.nio.file.WatchEvent;
 import java.nio.file.attribute.BasicFileAttributeView;
 import java.nio.file.attribute.BasicFileAttributes;
@@ -73,7 +71,6 @@ import java.util.Set;
 import java.util.TimeZone;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -92,9 +89,7 @@ import me.porcelli.nio.jgit.fs.options.CommentedOption;
 import me.porcelli.nio.jgit.fs.options.MergeCopyOption;
 import me.porcelli.nio.jgit.fs.options.SquashOption;
 import me.porcelli.nio.jgit.impl.config.ConfigProperties;
-import me.porcelli.nio.jgit.impl.daemon.git.Daemon;
 import me.porcelli.nio.jgit.impl.daemon.ssh.BaseGitCommand;
-import me.porcelli.nio.jgit.impl.daemon.ssh.GitSSHService;
 import me.porcelli.nio.jgit.impl.hook.FileSystemHooks;
 import me.porcelli.nio.jgit.impl.manager.JGitFileSystemsManager;
 import me.porcelli.nio.jgit.impl.op.Git;
@@ -108,14 +103,11 @@ import me.porcelli.nio.jgit.impl.op.model.MoveCommitContent;
 import me.porcelli.nio.jgit.impl.op.model.PathInfo;
 import me.porcelli.nio.jgit.impl.op.model.PathType;
 import me.porcelli.nio.jgit.impl.op.model.RevertCommitContent;
-import me.porcelli.nio.jgit.impl.util.DescriptiveThreadFactory;
 import me.porcelli.nio.jgit.impl.util.EncodingUtil;
 import me.porcelli.nio.jgit.security.AuthenticationService;
 import me.porcelli.nio.jgit.security.FileSystemAuthorization;
-import me.porcelli.nio.jgit.security.PublicKeyAuthenticator;
 import me.porcelli.nio.jgit.security.User;
 import org.eclipse.jgit.diff.DiffEntry;
-import org.eclipse.jgit.errors.RepositoryNotFoundException;
 import org.eclipse.jgit.internal.ketch.KetchLeaderCache;
 import org.eclipse.jgit.internal.ketch.KetchSystem;
 import org.eclipse.jgit.lib.ObjectId;
@@ -128,12 +120,7 @@ import org.eclipse.jgit.transport.CredentialsProvider;
 import org.eclipse.jgit.transport.ReceiveCommand;
 import org.eclipse.jgit.transport.ReceivePack;
 import org.eclipse.jgit.transport.SshSessionFactory;
-import org.eclipse.jgit.transport.UploadPack;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
-import org.eclipse.jgit.transport.resolver.ReceivePackFactory;
-import org.eclipse.jgit.transport.resolver.RepositoryResolver;
-import org.eclipse.jgit.transport.resolver.ServiceNotAuthorizedException;
-import org.eclipse.jgit.transport.resolver.UploadPackFactory;
 import org.eclipse.jgit.util.FS;
 import org.eclipse.jgit.util.FileUtils;
 import org.eclipse.jgit.util.ProcessResult;
@@ -164,6 +151,8 @@ import static org.eclipse.jgit.lib.Constants.DOT_GIT_EXT;
 
 public class JGitFileSystemProvider extends SecuredFileSystemProvider implements Closeable {
 
+    public static final JGitFileSystemProvider PROVIDER = new JGitFileSystemProvider();
+
     private static final Logger LOG = LoggerFactory.getLogger(JGitFileSystemProvider.class);
     private static final TimeUnit LOCK_LAST_ACCESS_TIME_UNIT = TimeUnit.SECONDS;
     private static final long LOCK_LAST_ACCESS_THRESHOLD = 10;
@@ -171,8 +160,6 @@ public class JGitFileSystemProvider extends SecuredFileSystemProvider implements
     private final Object postponedEventsLock = new Object();
 
     private FS detectedFS = FS.DETECTED;
-
-    private ExecutorService executorService;
 
     final KetchSystem system = new KetchSystem();
 
@@ -194,8 +181,7 @@ public class JGitFileSystemProvider extends SecuredFileSystemProvider implements
      * this class during startup.
      */
     public JGitFileSystemProvider() {
-        this(new ConfigProperties(System.getProperties()),
-             Executors.newCachedThreadPool(new DescriptiveThreadFactory()));
+        this(new ConfigProperties(System.getProperties()));
     }
 
     /**
@@ -204,8 +190,7 @@ public class JGitFileSystemProvider extends SecuredFileSystemProvider implements
      * this class during startup.
      */
     public JGitFileSystemProvider(final Map<String, String> gitPrefs) throws IOException {
-        this(new ConfigProperties(gitPrefs),
-             Executors.newCachedThreadPool(new DescriptiveThreadFactory()));
+        this(new ConfigProperties(gitPrefs));
     }
 
     /**
@@ -213,10 +198,7 @@ public class JGitFileSystemProvider extends SecuredFileSystemProvider implements
      * For a list of properties that affect the configuration of JGitFileSystemProvider, see the DEBUG log output of
      * this class during startup.
      */
-    public JGitFileSystemProvider(final ConfigProperties gitPrefs,
-                                  final ExecutorService executorService) {
-        this.executorService = executorService;
-
+    public JGitFileSystemProvider(final ConfigProperties gitPrefs) {
         setupConfigs(gitPrefs);
 
         setupFileSystemsManager();
@@ -308,30 +290,30 @@ public class JGitFileSystemProvider extends SecuredFileSystemProvider implements
         shutdown();
     }
 
-    public class RepositoryResolverImpl<T> implements RepositoryResolver<T> {
-
-        @Override
-        public Repository open(final T client,
-                               final String name)
-                throws RepositoryNotFoundException, ServiceNotAuthorizedException {
-            final User user = extractUser(client);
-            final JGitFileSystem fs = fsManager.get(name);
-            if (fs == null) {
-                throw new RepositoryNotFoundException(name);
-            }
-
-            if (authorizer != null && !authorizer.authorize(fs,
-                                                            user)) {
-                throw new ServiceNotAuthorizedException("User not authorized.");
-            }
-
-            return fs.getGit().getRepository();
-        }
-
-        public JGitFileSystem resolveFileSystem(final Repository repository) {
-            return fsManager.get(repository);
-        }
-    }
+//    public class RepositoryResolverImpl<T> implements RepositoryResolver<T> {
+//
+//        @Override
+//        public Repository open(final T client,
+//                               final String name)
+//                throws RepositoryNotFoundException, ServiceNotAuthorizedException {
+//            final User user = extractUser(client);
+//            final JGitFileSystem fs = fsManager.get(name);
+//            if (fs == null) {
+//                throw new RepositoryNotFoundException(name);
+//            }
+//
+//            if (authorizer != null && !authorizer.authorize(fs,
+//                                                            user)) {
+//                throw new ServiceNotAuthorizedException("User not authorized.");
+//            }
+//
+//            return fs.getGit().getRepository();
+//        }
+//
+//        public JGitFileSystem resolveFileSystem(final Repository repository) {
+//            return fsManager.get(repository);
+//        }
+//    }
 
     private User extractUser(Object client) {
         if (httpAuthenticator != null && client instanceof HttpServletRequest) {
@@ -342,8 +324,6 @@ public class JGitFileSystemProvider extends SecuredFileSystemProvider implements
 
         return () -> "ANONYMOUS";
     }
-
-
 
     public <T> ReceivePack getReceivePack(final String protocol, final T req, final Repository db) {
         return new ReceivePack(db) {
@@ -387,9 +367,9 @@ public class JGitFileSystemProvider extends SecuredFileSystemProvider implements
         };
     }
 
-    public <T> RepositoryResolverImpl<T> getRepositoryResolver() {
-        return new RepositoryResolverImpl<>();
-    }
+//    public <T> RepositoryResolverImpl<T> getRepositoryResolver() {
+//        return new RepositoryResolverImpl<>();
+//    }
 
     /**
      * Closes and disposes all open filesystems and stops the Git and SSH daemons if they are running. This filesystem
@@ -2349,13 +2329,13 @@ public class JGitFileSystemProvider extends SecuredFileSystemProvider implements
         }
     }
 
-    List<WatchEvent<?>> notifyDiffs(final JGitFileSystem fs,
-                                    final String _tree,
-                                    final String sessionId,
-                                    final String userName,
-                                    final String message,
-                                    final ObjectId oldHead,
-                                    final ObjectId newHead) {
+    public List<WatchEvent<?>> notifyDiffs(final JGitFileSystem fs,
+                                           final String _tree,
+                                           final String sessionId,
+                                           final String userName,
+                                           final String message,
+                                           final ObjectId oldHead,
+                                           final ObjectId newHead) {
 
         List<WatchEvent<?>> watchEvents = compareDiffs(fs,
                                                        _tree,

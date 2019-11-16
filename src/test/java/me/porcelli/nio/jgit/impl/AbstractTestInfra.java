@@ -40,6 +40,8 @@ import java.util.Map;
 import java.util.Scanner;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import me.porcelli.nio.jgit.daemon.GitDaemon;
+import me.porcelli.nio.jgit.daemon.SSHDaemon;
 import me.porcelli.nio.jgit.impl.op.Git;
 import me.porcelli.nio.jgit.impl.op.commands.Commit;
 import me.porcelli.nio.jgit.impl.op.commands.ListRefs;
@@ -89,7 +91,9 @@ public abstract class AbstractTestInfra {
 
     @Before
     public void createGitFsProvider() throws IOException {
-        provider = new JGitFileSystemProvider(getGitPreferences());
+//        provider = new JGitFileSystemProvider(getGitPreferences());
+        provider = JGitFileSystemProvider.PROVIDER;
+        getGitPreferences();
     }
 
     /*

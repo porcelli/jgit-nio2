@@ -23,11 +23,13 @@ import java.util.concurrent.ExecutorService;
 import java.util.zip.Deflater;
 
 import me.porcelli.nio.jgit.impl.JGitFileSystemProvider;
+import me.porcelli.nio.jgit.impl.daemon.RepositoryResolverImpl;
 import me.porcelli.nio.jgit.impl.daemon.filter.HiddenBranchRefFilter;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.storage.pack.PackConfig;
 import org.eclipse.jgit.transport.RefFilter;
 import org.eclipse.jgit.transport.UploadPack;
+import org.eclipse.jgit.transport.resolver.RepositoryResolver;
 import org.eclipse.jgit.transport.resolver.UploadPackFactory;
 
 public class GitUploadCommand extends BaseGitCommand {
@@ -35,7 +37,7 @@ public class GitUploadCommand extends BaseGitCommand {
     private UploadPackFactory<BaseGitCommand> uploadPackFactory;
 
     public GitUploadCommand(final String command,
-                            final JGitFileSystemProvider.RepositoryResolverImpl<BaseGitCommand> repositoryResolver,
+                            final RepositoryResolver repositoryResolver,
                             final UploadPackFactory uploadPackFactory,
                             final ExecutorService executorService) {
         super(command,

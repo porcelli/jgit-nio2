@@ -24,7 +24,7 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 
 import me.porcelli.nio.jgit.impl.ExecutorServiceProducer;
-import me.porcelli.nio.jgit.impl.JGitFileSystemProvider;
+import me.porcelli.nio.jgit.impl.daemon.RepositoryResolverImpl;
 import org.apache.sshd.common.cipher.BuiltinCiphers;
 import org.apache.sshd.common.mac.BuiltinMacs;
 import org.apache.sshd.server.SshServer;
@@ -83,11 +83,11 @@ public class GitSSHServiceTest {
 
         sshService.setup(certDir,
                          null,
-                         "10000",
+                         10000,
                          "RSA",
                          mock(ReceivePackFactory.class),
                          mock(UploadPackFactory.class),
-                         mock(JGitFileSystemProvider.RepositoryResolverImpl.class),
+                         mock(RepositoryResolverImpl.class),
                          executorService);
 
         sshService.start();
@@ -105,11 +105,11 @@ public class GitSSHServiceTest {
 
         sshService.setup(certDir,
                          null,
-                         "10000",
+                         10000,
                          "DSA",
                          mock(ReceivePackFactory.class),
                          mock(UploadPackFactory.class),
-                         mock(JGitFileSystemProvider.RepositoryResolverImpl.class),
+                         mock(RepositoryResolverImpl.class),
                          executorService);
 
         sshService.start();
@@ -125,14 +125,14 @@ public class GitSSHServiceTest {
         final GitSSHService sshService = new GitSSHService();
         final File certDir = createTempDirectory();
 
-        String idleTimeout = "10000";
+        int idleTimeout = 10000;
         sshService.setup(certDir,
                          null,
                          idleTimeout,
                          "RSA",
                          mock(ReceivePackFactory.class),
                          mock(UploadPackFactory.class),
-                         mock(JGitFileSystemProvider.RepositoryResolverImpl.class),
+                         mock(RepositoryResolverImpl.class),
                          executorService);
 
         sshService.start();
@@ -153,11 +153,11 @@ public class GitSSHServiceTest {
         try {
             sshService.setup(certDir,
                              null,
-                             "10000",
+                             10000,
                              "xxxx",
                              mock(ReceivePackFactory.class),
                              mock(UploadPackFactory.class),
-                             mock(JGitFileSystemProvider.RepositoryResolverImpl.class),
+                             mock(RepositoryResolverImpl.class),
                              executorService);
             fail("has to fail");
         } catch (final Exception ex) {
@@ -173,11 +173,11 @@ public class GitSSHServiceTest {
         try {
             sshService.setup(null,
                              null,
-                             "10000",
+                             10000,
                              "RSA",
                              mock(ReceivePackFactory.class),
                              mock(UploadPackFactory.class),
-                             mock(JGitFileSystemProvider.RepositoryResolverImpl.class),
+                             mock(RepositoryResolverImpl.class),
                              executorService);
             fail("has to fail");
         } catch (IllegalArgumentException ex) {
@@ -187,39 +187,11 @@ public class GitSSHServiceTest {
         try {
             sshService.setup(certDir,
                              null,
-                             null,
-                             "RSA",
-                             mock(ReceivePackFactory.class),
-                             mock(UploadPackFactory.class),
-                             mock(JGitFileSystemProvider.RepositoryResolverImpl.class),
-                             executorService);
-            fail("has to fail");
-        } catch (IllegalArgumentException ex) {
-            assertThat(ex.getMessage()).contains("'sshIdleTimeout'");
-        }
-
-        try {
-            sshService.setup(certDir,
-                             null,
-                             "",
-                             "RSA",
-                             mock(ReceivePackFactory.class),
-                             mock(UploadPackFactory.class),
-                             mock(JGitFileSystemProvider.RepositoryResolverImpl.class),
-                             executorService);
-            fail("has to fail");
-        } catch (IllegalArgumentException ex) {
-            assertThat(ex.getMessage()).contains("'sshIdleTimeout'");
-        }
-
-        try {
-            sshService.setup(certDir,
-                             null,
-                             "1000",
+                             1000,
                              null,
                              mock(ReceivePackFactory.class),
                              mock(UploadPackFactory.class),
-                             mock(JGitFileSystemProvider.RepositoryResolverImpl.class),
+                             mock(RepositoryResolverImpl.class),
                              executorService);
             fail("has to fail");
         } catch (IllegalArgumentException ex) {
@@ -229,11 +201,11 @@ public class GitSSHServiceTest {
         try {
             sshService.setup(certDir,
                              null,
-                             "1000",
+                             1000,
                              "",
                              mock(ReceivePackFactory.class),
                              mock(UploadPackFactory.class),
-                             mock(JGitFileSystemProvider.RepositoryResolverImpl.class),
+                             mock(RepositoryResolverImpl.class),
                              executorService);
             fail("has to fail");
         } catch (IllegalArgumentException ex) {
@@ -243,11 +215,11 @@ public class GitSSHServiceTest {
         try {
             sshService.setup(certDir,
                              null,
-                             "100",
+                             100,
                              "RSA",
                              null,
                              null,
-                             mock(JGitFileSystemProvider.RepositoryResolverImpl.class),
+                             mock(RepositoryResolverImpl.class),
                              executorService);
             fail("has to fail");
         } catch (IllegalArgumentException ex) {
@@ -257,7 +229,7 @@ public class GitSSHServiceTest {
         try {
             sshService.setup(certDir,
                              null,
-                             "100",
+                             100,
                              "RSA",
                              mock(ReceivePackFactory.class),
                              mock(UploadPackFactory.class),
@@ -271,11 +243,11 @@ public class GitSSHServiceTest {
         try {
             sshService.setup(certDir,
                              null,
-                             "10000",
+                             10000,
                              "RSA",
                              mock(ReceivePackFactory.class),
                              mock(UploadPackFactory.class),
-                             mock(JGitFileSystemProvider.RepositoryResolverImpl.class),
+                             mock(RepositoryResolverImpl.class),
                              executorService);
         } catch (IllegalArgumentException ex) {
             fail("should not fail");
@@ -287,7 +259,7 @@ public class GitSSHServiceTest {
         final GitSSHService sshService = new GitSSHService();
         final File certDir = createTempDirectory();
 
-        String idleTimeout = "10000";
+        int idleTimeout = 10000;
         String ciphers = "aes128-cbc,aes128-ctr,aes192-cbc,aes192-ctr,aes256-cbc,aes256-ctr,arcfour128,arcfour256,blowfish-cbc,3des-cbc";
         String macs = "hmac-md5, hmac-md5-96, hmac-sha1, hmac-sha1-96, hmac-sha2-256, hmac-sha2-512";
         sshService.setup(certDir,
@@ -296,7 +268,7 @@ public class GitSSHServiceTest {
                          "RSA",
                          mock(ReceivePackFactory.class),
                          mock(UploadPackFactory.class),
-                         mock(JGitFileSystemProvider.RepositoryResolverImpl.class),
+                         mock(RepositoryResolverImpl.class),
                          executorService,
                          ciphers,
                          macs);
@@ -325,7 +297,7 @@ public class GitSSHServiceTest {
         final GitSSHService sshService = new GitSSHService();
         final File certDir = createTempDirectory();
 
-        String idleTimeout = "10000";
+        int idleTimeout = 10000;
         String macs = "hmac-md5, hmac-md5-96, hmac-sha1, hmac-sha1-96, hmac-sha2-256, hmac-sha2-512";
         sshService.setup(certDir,
                          null,
@@ -333,7 +305,7 @@ public class GitSSHServiceTest {
                          "RSA",
                          mock(ReceivePackFactory.class),
                          mock(UploadPackFactory.class),
-                         mock(JGitFileSystemProvider.RepositoryResolverImpl.class),
+                         mock(RepositoryResolverImpl.class),
                          executorService,
                          "",
                          macs);
@@ -362,7 +334,7 @@ public class GitSSHServiceTest {
         final GitSSHService sshService = new GitSSHService();
         final File certDir = createTempDirectory();
 
-        String idleTimeout = "10000";
+        int idleTimeout = 10000;
 
         String ciphers = "aes128-cbc,aes128-ctr,aes192-cbc,aes192-ctr,aes256-cbc,aes256-ctr,arcfour128,arcfour256,blowfish-cbc,3des-cbc";
         sshService.setup(certDir,
@@ -371,7 +343,7 @@ public class GitSSHServiceTest {
                          "RSA",
                          mock(ReceivePackFactory.class),
                          mock(UploadPackFactory.class),
-                         mock(JGitFileSystemProvider.RepositoryResolverImpl.class),
+                         mock(RepositoryResolverImpl.class),
                          executorService,
                          ciphers,
                          "");
@@ -400,14 +372,14 @@ public class GitSSHServiceTest {
         final GitSSHService sshService = new GitSSHService();
         final File certDir = createTempDirectory();
 
-        String idleTimeout = "10000";
+        int idleTimeout = 10000;
         sshService.setup(certDir,
                          null,
                          idleTimeout,
                          "RSA",
                          mock(ReceivePackFactory.class),
                          mock(UploadPackFactory.class),
-                         mock(JGitFileSystemProvider.RepositoryResolverImpl.class),
+                         mock(RepositoryResolverImpl.class),
                          executorService,
                          "",
                          "");
@@ -436,14 +408,14 @@ public class GitSSHServiceTest {
         final GitSSHService sshService = new GitSSHService();
         final File certDir = createTempDirectory();
 
-        String idleTimeout = "10000";
+        int idleTimeout = 10000;
         sshService.setup(certDir,
                          null,
                          idleTimeout,
                          "RSA",
                          mock(ReceivePackFactory.class),
                          mock(UploadPackFactory.class),
-                         mock(JGitFileSystemProvider.RepositoryResolverImpl.class),
+                         mock(RepositoryResolverImpl.class),
                          executorService,
                          null,
                          null);
@@ -472,7 +444,7 @@ public class GitSSHServiceTest {
         final GitSSHService sshService = new GitSSHService();
         final File certDir = createTempDirectory();
 
-        String idleTimeout = "10000";
+        int idleTimeout = 10000;
         String ciphers = "aes126-cbc,aes124-ctr,aes192-cbc,aes192-ctr,aes255-cbc,aes256-ctr,arcfour128,arcfour256,blowfish-cbc,3des-cbc";
         sshService.setup(certDir,
                          null,
@@ -480,7 +452,7 @@ public class GitSSHServiceTest {
                          "RSA",
                          mock(ReceivePackFactory.class),
                          mock(UploadPackFactory.class),
-                         mock(JGitFileSystemProvider.RepositoryResolverImpl.class),
+                         mock(RepositoryResolverImpl.class),
                          executorService,
                          ciphers,
                          "");

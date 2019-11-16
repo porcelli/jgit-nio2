@@ -21,18 +21,18 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.concurrent.ExecutorService;
 
-import me.porcelli.nio.jgit.impl.JGitFileSystemProvider;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.transport.ReceivePack;
 import org.eclipse.jgit.transport.resolver.ReceivePackFactory;
+import org.eclipse.jgit.transport.resolver.RepositoryResolver;
 
 public class GitReceiveCommand extends BaseGitCommand {
 
     private final ReceivePackFactory<BaseGitCommand> receivePackFactory;
 
     public GitReceiveCommand(final String command,
-                             final JGitFileSystemProvider.RepositoryResolverImpl<BaseGitCommand> repositoryResolver,
+                             final RepositoryResolver repositoryResolver,
                              final ReceivePackFactory<BaseGitCommand> receivePackFactory,
                              final ExecutorService executorService) {
         super(command,

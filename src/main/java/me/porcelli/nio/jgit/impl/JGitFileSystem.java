@@ -82,15 +82,15 @@ public abstract class JGitFileSystem extends FileSystem implements FileSystemSta
 
     abstract public boolean hasBeenInUse();
 
-    abstract void notifyExternalUpdate();
+    public abstract void notifyExternalUpdate();
 
     abstract void notifyPostCommit(int exitCode);
 
-    abstract void checkBranchAccess(ReceiveCommand command,
-                                    User user);
+    public abstract void checkBranchAccess(ReceiveCommand command,
+                                           User user);
 
-    abstract void filterBranchAccess(UploadPack uploadPack,
-                                     User user);
+    public abstract void filterBranchAccess(UploadPack uploadPack,
+                                            User user);
 
     public abstract String getName();
 }

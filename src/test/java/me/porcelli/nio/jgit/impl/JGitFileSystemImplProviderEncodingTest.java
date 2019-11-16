@@ -26,6 +26,10 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+import me.porcelli.nio.jgit.DaemonBuilder;
+import me.porcelli.nio.jgit.daemon.GitDaemon;
+import me.porcelli.nio.jgit.impl.daemon.git.GitDaemonBuilder;
+import me.porcelli.nio.jgit.impl.daemon.git.GitDaemonImpl;
 import me.porcelli.nio.jgit.impl.op.commands.Commit;
 import org.junit.Test;
 
@@ -45,10 +49,13 @@ public class JGitFileSystemImplProviderEncodingTest extends AbstractTestInfra {
 
     @Test
     public void test() throws IOException {
+        final GitDaemonImpl daemon = (GitDaemonImpl) DaemonBuilder.buildGitDaemon(gitDaemonPort);
         final URI originRepo = URI.create("git://encoding-origin-name");
 
         final JGitFileSystem origin = (JGitFileSystem) provider.newFileSystem(originRepo,
                                                                               Collections.emptyMap());
+
+        daemon.accept(origin);
 
         new Commit(origin.getGit(),
                    "master",

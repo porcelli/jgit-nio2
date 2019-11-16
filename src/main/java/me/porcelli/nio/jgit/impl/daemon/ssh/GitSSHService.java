@@ -27,7 +27,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 
-import me.porcelli.nio.jgit.impl.JGitFileSystemProvider;
+import me.porcelli.nio.jgit.impl.daemon.RepositoryResolverImpl;
 import me.porcelli.nio.jgit.security.AuthenticationService;
 import me.porcelli.nio.jgit.security.PublicKeyAuthenticator;
 import me.porcelli.nio.jgit.security.User;
@@ -40,6 +40,7 @@ import org.apache.sshd.server.keyprovider.AbstractGeneratorHostKeyProvider;
 import org.apache.sshd.server.keyprovider.SimpleGeneratorHostKeyProvider;
 import org.apache.sshd.server.scp.UnknownCommand;
 import org.eclipse.jgit.transport.resolver.ReceivePackFactory;
+import org.eclipse.jgit.transport.resolver.RepositoryResolver;
 import org.eclipse.jgit.transport.resolver.UploadPackFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -92,29 +93,27 @@ public class GitSSHService {
 
     public void setup(final File certDir,
                       final InetSocketAddress inetSocketAddress,
-                      final String sshIdleTimeout,
+                      final int sshIdleTimeout,
                       final String algorithm,
                       final ReceivePackFactory receivePackFactory,
                       final UploadPackFactory uploadPackFactory,
-                      final JGitFileSystemProvider.RepositoryResolverImpl<BaseGitCommand> repositoryResolver,
+                      final RepositoryResolverImpl<BaseGitCommand> repositoryResolver,
                       final ExecutorService executorService) {
         setup(certDir, inetSocketAddress, sshIdleTimeout, algorithm, receivePackFactory, uploadPackFactory, repositoryResolver, executorService, null, null);
     }
 
     public void setup(final File certDir,
                       final InetSocketAddress inetSocketAddress,
-                      final String sshIdleTimeout,
+                      final int sshIdleTimeout,
                       final String algorithm,
                       final ReceivePackFactory receivePackFactory,
                       final UploadPackFactory uploadPackFactory,
-                      final JGitFileSystemProvider.RepositoryResolverImpl<BaseGitCommand> repositoryResolver,
+                      final RepositoryResolver repositoryResolver,
                       final ExecutorService executorService,
                       final String gitSshCiphers,
                       final String gitSshMacs) {
         checkNotNull("certDir",
                      certDir);
-        checkNotEmpty("sshIdleTimeout",
-                      sshIdleTimeout);
         checkNotEmpty("algorithm",
                       algorithm);
         checkNotNull("receivePackFactory",

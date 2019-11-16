@@ -15,7 +15,7 @@ public abstract class DaemonImpl implements Daemon {
 
     public DaemonImpl(final String hostAddr,
                       final String hostName,
-                      final int port){
+                      final int port) {
         this.hostName = hostName;
         this.hostAddr = hostAddr;
         this.port = port;
@@ -49,4 +49,12 @@ public abstract class DaemonImpl implements Daemon {
         return port;
     }
 
+    @Override
+    public String toString() {
+        return "DaemonImpl{" +
+                "hostName='" + hostName + '\'' +
+                ", hostAddr='" + hostAddr + '\'' +
+                ", port=" + port +
+                '}';
+    }
 }

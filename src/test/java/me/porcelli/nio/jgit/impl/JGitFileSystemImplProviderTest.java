@@ -52,6 +52,7 @@ import me.porcelli.nio.jgit.fs.attribute.HiddenAttributeView;
 import me.porcelli.nio.jgit.fs.attribute.VersionRecord;
 import me.porcelli.nio.jgit.fs.options.CommentedOption;
 import me.porcelli.nio.jgit.fs.options.SquashOption;
+import me.porcelli.nio.jgit.impl.daemon.RepositoryResolverImpl;
 import me.porcelli.nio.jgit.impl.hook.FileSystemHooks;
 import me.porcelli.nio.jgit.impl.manager.JGitFileSystemsManager;
 import me.porcelli.nio.jgit.impl.op.Git;
@@ -2006,7 +2007,7 @@ public class JGitFileSystemImplProviderTest extends AbstractTestInfra {
         JGitFileSystem fsSimpleName = ((JGitFileSystemProxy) provider.newFileSystem(URI.create("git://repo"),
                                                                                     EMPTY_ENV)).getRealJGitFileSystem();
 
-        JGitFileSystemProvider.RepositoryResolverImpl<Object> objectRepositoryResolver = provider.new RepositoryResolverImpl<>();
+        RepositoryResolverImpl<Object> objectRepositoryResolver = new RepositoryResolverImpl<>(provider.fsManager);
 
         assertEquals(fsSimpleName,
                      objectRepositoryResolver.resolveFileSystem(fsSimpleName.getGit().getRepository()));

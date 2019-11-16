@@ -11,12 +11,12 @@ import me.porcelli.nio.jgit.impl.JGitFileSystem;
 import me.porcelli.nio.jgit.impl.JGitFileSystemProvider;
 import me.porcelli.nio.jgit.impl.daemon.DaemonImpl;
 
+import static me.porcelli.nio.jgit.impl.JGitFileSystemProvider.PROVIDER;
 import static me.porcelli.nio.jgit.impl.JGitFileSystemProviderConfiguration.GIT_ENV_KEY_DEFAULT_REMOTE_NAME;
 import static me.porcelli.nio.jgit.impl.JGitFileSystemProviderConfiguration.GIT_ENV_KEY_FULL_HOST_NAMES;
 
 public final class JGitFileSystemBuilder {
 
-    static final JGitFileSystemProvider PROVIDER = new JGitFileSystemProvider();
     private static final Map<String, String> DEFAULT_OPTIONS = new HashMap<>();
 
     private JGitFileSystemBuilder() {

@@ -23,7 +23,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.concurrent.ExecutorService;
 
-import me.porcelli.nio.jgit.impl.JGitFileSystemProvider;
 import me.porcelli.nio.jgit.impl.util.DescriptiveRunnable;
 import me.porcelli.nio.jgit.security.User;
 import org.apache.sshd.common.channel.ChannelOutputStream;
@@ -58,7 +57,7 @@ public abstract class BaseGitCommand implements Command,
     private User user;
 
     public BaseGitCommand(final String command,
-                          final JGitFileSystemProvider.RepositoryResolverImpl repositoryResolver,
+                          final RepositoryResolver repositoryResolver,
                           final ExecutorService executorService) {
         this.command = command;
         this.repositoryName = buildRepositoryName(command);

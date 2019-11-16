@@ -50,7 +50,7 @@ public class HTTPSupport implements ServletContextListener {
 //                                       fsProvider.getConfig().getHttpsHostName() + ":" + fsProvider.getConfig().getHttpsPort() + servletContext.getContextPath() + "/" + GIT_PATH);
             }
             final GitServlet gitServlet = new GitServlet();
-            gitServlet.setRepositoryResolver(fsProvider.getRepositoryResolver());
+//            gitServlet.setRepositoryResolver(fsProvider.getRepositoryResolver());
             gitServlet.setAsIsFileService(null);
             gitServlet.setReceivePackFactory((req, db) -> fsProvider.getReceivePack("http", req, db));
             ServletRegistration.Dynamic sd = servletContext.addServlet("GitServlet", gitServlet);

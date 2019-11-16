@@ -17,42 +17,16 @@ public interface SSHDaemon extends SecureDaemon {
     String DEFAULT_SSH_ALGORITHM = "RSA";
     int DEFAULT_SSH_IDLE_TIMEOUT = 10000;
     String DEFAULT_SSH_CERT_PASSPHRASE = "";
-    //authentication
 
+    String sshFileCertDir();
 
-//    private String sshHostAddr;
-//    private String sshHostName;
-//    private File sshFileCertDir;
-//    private String sshAlgorithm;
-//    private String sshPassphrase;
-//    private String sshIdleTimeout;
-//    private String gitSshCiphers;
-//    private String gitSshMACs;
+    String sshAlgorithm();
 
+    String sshPassphrase();
 
-//    private void buildAndStartSSH() {
-//        final ReceivePackFactory receivePackFactory = (req, db) -> getReceivePack("ssh", req, db);
-//
-//        final UploadPackFactory uploadPackFactory = (UploadPackFactory<BaseGitCommand>) (req, db) -> new UploadPack(db) {{
-//            final JGitFileSystem fs = fsManager.get(db);
-//            fs.filterBranchAccess(this,
-//                                  req.getUser());
-//        }};
-//
-//        gitSSHService = new GitSSHService();
-//
-//        gitSSHService.setup(config.getSshFileCertDir(),
-//                            InetSocketAddress.createUnresolved(config.getSshHostAddr(),
-//                                                               config.getSshPort()),
-//                            config.getSshIdleTimeout(),
-//                            config.getSshAlgorithm(),
-//                            receivePackFactory,
-//                            uploadPackFactory,
-//                            getRepositoryResolver(),
-//                            executorService,
-//                            config.getGitSshCiphers(),
-//                            config.getGitSshMACs());
-//
-//        gitSSHService.start();
-//    }
+    int sshIdleTimeout();
+
+    String gitSshCiphers();
+
+    String gitSshMACs();
 }

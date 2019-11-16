@@ -25,4 +25,9 @@ public class GitDaemonImpl extends DaemonImpl implements GitDaemon {
     public void close() throws IOException {
         daemon.stop();
     }
+
+    @Override
+    public String toString() {
+        return super.toString();
+    }
 }
