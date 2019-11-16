@@ -72,8 +72,6 @@ import org.junit.Test;
 
 import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.assertNotNull;
-import static me.porcelli.nio.jgit.impl.JGitFileSystemProviderConfiguration.GIT_DAEMON_ENABLED;
-import static me.porcelli.nio.jgit.impl.JGitFileSystemProviderConfiguration.GIT_DAEMON_PORT;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.catchThrowable;
@@ -98,11 +96,7 @@ public class JGitFileSystemImplProviderTest extends AbstractTestInfra {
     @Override
     public Map<String, String> getGitPreferences() {
         Map<String, String> gitPrefs = super.getGitPreferences();
-        gitPrefs.put(GIT_DAEMON_ENABLED,
-                     "true");
         gitDaemonPort = findFreePort();
-        gitPrefs.put(GIT_DAEMON_PORT,
-                     String.valueOf(gitDaemonPort));
         System.out.println(gitDaemonPort);
         return gitPrefs;
     }

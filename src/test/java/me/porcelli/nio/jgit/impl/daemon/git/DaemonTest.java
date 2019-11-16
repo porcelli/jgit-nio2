@@ -18,7 +18,6 @@
 package me.porcelli.nio.jgit.impl.daemon.git;
 
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 import me.porcelli.nio.jgit.impl.ExecutorServiceProducer;
@@ -29,13 +28,11 @@ import static org.junit.Assert.assertTrue;
 
 public class DaemonTest {
 
-    private final ExecutorService executorService = new ExecutorServiceProducer().produceUnmanagedExecutorService();
-
     @Test
     public void testShutdownByStop() throws Exception {
-        ExecutorService executor = Executors.newCachedThreadPool();
+        final ExecutorService executorService = new ExecutorServiceProducer().produceUnmanagedExecutorService();
+
         Daemon d = new Daemon(null,
-                              executor,
                               executorService);
         d.start();
         assertTrue(d.isRunning());
@@ -47,16 +44,15 @@ public class DaemonTest {
 
     @Test
     public void testShutdownByThreadPoolTermination() throws Exception {
-        ExecutorService executor = Executors.newCachedThreadPool();
+        final ExecutorService execService = new ExecutorServiceProducer().produceUnmanagedExecutorService();
         Daemon d = new Daemon(null,
-                              executor,
-                              executorService);
+                              execService);
         d.start();
         assertTrue(d.isRunning());
 
-        executor.shutdownNow();
-        executor.awaitTermination(10,
-                                  TimeUnit.SECONDS);
+        execService.shutdownNow();
+        execService.awaitTermination(10,
+                                     TimeUnit.SECONDS);
 
         assertFalse(d.isRunning());
     }

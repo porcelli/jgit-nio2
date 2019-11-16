@@ -29,7 +29,6 @@ import java.net.SocketAddress;
 import java.net.URISyntaxException;
 import java.util.Date;
 import java.util.TimeZone;
-import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.zip.Deflater;
@@ -84,16 +83,12 @@ public class Daemon {
 
     private ServerSocket listenSock = null;
 
-    private ExecutorService executorService;
-
-    private final Executor acceptThreadPool;
+    private final ExecutorService acceptThreadPool;
 
     public Daemon(final InetSocketAddress addr,
-                  final Executor acceptThreadPool,
-                  final ExecutorService executorService) {
+                  final ExecutorService acceptThreadPool) {
         this(addr,
              acceptThreadPool,
-             executorService,
              null);
     }
 
@@ -106,14 +101,11 @@ public class Daemon {
      * restarted, a new task will be submitted to this pool. When the daemon is stopped, the task completes.
      */
     public Daemon(final InetSocketAddress addr,
-                  final Executor acceptThreadPool,
-                  final ExecutorService executorService,
+                  final ExecutorService acceptThreadPool,
                   final KetchLeaderCache leaders) {
         myAddress = addr;
         this.acceptThreadPool = checkNotNull("acceptThreadPool",
                                              acceptThreadPool);
-
-        this.executorService = executorService;
 
         repositoryResolver = (RepositoryResolver<DaemonClient>) RepositoryResolver.NONE;
 
@@ -356,7 +348,7 @@ public class Daemon {
             dc.setRemoteAddress(((InetSocketAddress) peer).getAddress());
         }
 
-        executorService.execute(new DescriptiveRunnable() {
+        acceptThreadPool.execute(new DescriptiveRunnable() {
             @Override
             public String getDescription() {
                 return "Git-Daemon-Client " + peer.toString();

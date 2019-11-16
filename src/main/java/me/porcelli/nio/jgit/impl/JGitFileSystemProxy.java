@@ -267,11 +267,6 @@ public class JGitFileSystemProxy extends JGitFileSystem {
     }
 
     @Override
-    public void dispose() throws IOException {
-        cachedSupplier.get().dispose();
-    }
-
-    @Override
     public String id() {
         return fsName;
     }

@@ -37,7 +37,6 @@ public class JGitFileSystemProviderConfiguration {
     public static final String GIT_ENV_KEY_BRANCH_LIST = "branches";
     public static final String GIT_ENV_KEY_SUBDIRECTORY = "subdirectory";
 
-    public static final String GIT_DAEMON_ENABLED = "nio.git.daemon.enabled";
     public static final String GIT_SSH_ENABLED = "nio.git.ssh.enabled";
     public static final String GIT_HTTP_ENABLED = "nio.git.http.enabled";
     public static final String GIT_HTTPS_ENABLED = "nio.git.https.enabled";
@@ -54,9 +53,7 @@ public class JGitFileSystemProviderConfiguration {
     public static final String GIT_HTTPS_HOSTNAME = "nio.git.https.hostname";
     public static final String GIT_HTTPS_PORT = "nio.git.https.port";
 
-    public static final String GIT_DAEMON_HOST = "nio.git.daemon.host";
     public static final String GIT_DAEMON_HOSTNAME = "nio.git.daemon.hostname";
-    public static final String GIT_DAEMON_PORT = "nio.git.daemon.port";
     public static final String GIT_SSH_HOST = "nio.git.ssh.host";
     public static final String GIT_SSH_HOSTNAME = "nio.git.ssh.hostname";
     public static final String GIT_SSH_PORT = "nio.git.ssh.port";
@@ -88,6 +85,8 @@ public class JGitFileSystemProviderConfiguration {
     public static final String GIT_ENV_KEY_PASSWORD = "password";
     public static final String GIT_ENV_KEY_INIT = "init";
     public static final String GIT_ENV_KEY_MIRROR = "mirror";
+    public static final String GIT_ENV_KEY_FULL_HOST_NAMES = "fullhostnames";
+
     public static final String SCHEME = "git";
     public static final String GIT_SSH_CIPHERS = "nio.git.ssh.ciphers";
     public static final String GIT_SSH_MACS = "nio.git.ssh.macs";
@@ -99,8 +98,6 @@ public class JGitFileSystemProviderConfiguration {
     public static final String DEFAULT_SSH_OVER_HTTP = "false";
     public static final String DEFAULT_SSH_OVER_HTTPS = "false";
     public static final String DEFAULT_HOST_ADDR = "127.0.0.1";
-    public static final String DEFAULT_DAEMON_DEFAULT_ENABLED = "true";
-    public static final String DEFAULT_DAEMON_DEFAULT_PORT = "9418";
     public static final String DEFAULT_SSH_ENABLED = "true";
     public static final String DEFAULT_HTTP_ENABLED = "true";
     public static final String DEFAULT_HTTPS_ENABLED = "false";
@@ -121,10 +118,6 @@ public class JGitFileSystemProviderConfiguration {
 
     private int commitLimit;
     private boolean sslVerify;
-    private boolean daemonEnabled;
-    private int daemonPort;
-    private String daemonHostAddr;
-    private String daemonHostName;
 
     private boolean sshEnabled;
     private int sshPort;
@@ -185,14 +178,6 @@ public class JGitFileSystemProviderConfiguration {
                                                                                   currentDirectory);
         final ConfigProperties.ConfigProperty reposDirNameProp = systemConfig.get(GIT_NIO_DIR_NAME,
                                                                                   REPOSITORIES_CONTAINER_DIR);
-        final ConfigProperties.ConfigProperty enabledProp = systemConfig.get(GIT_DAEMON_ENABLED,
-                                                                             DEFAULT_DAEMON_DEFAULT_ENABLED);
-        final ConfigProperties.ConfigProperty hostProp = systemConfig.get(GIT_DAEMON_HOST,
-                                                                          DEFAULT_HOST_ADDR);
-        final ConfigProperties.ConfigProperty hostNameProp = systemConfig.get(GIT_DAEMON_HOSTNAME,
-                                                                              hostProp.isDefault() ? DEFAULT_HOST_NAME : hostProp.getValue());
-        final ConfigProperties.ConfigProperty portProp = systemConfig.get(GIT_DAEMON_PORT,
-                                                                          DEFAULT_DAEMON_DEFAULT_PORT);
 
         final ConfigProperties.ConfigProperty httpEnabledProp = systemConfig.get(GIT_HTTP_ENABLED,
                                                                                  DEFAULT_HTTP_ENABLED);
@@ -342,13 +327,6 @@ public class JGitFileSystemProviderConfiguration {
             jgitCacheEvictThresholdTimeUnit = DEFAULT_JGIT_CACHE_EVICT_THRESHOLD_TIME_UNIT;
         }
 
-        daemonEnabled = enabledProp.getBooleanValue();
-        if (daemonEnabled) {
-            daemonPort = portProp.getIntValue();
-            daemonHostAddr = hostProp.getValue();
-            daemonHostName = hostNameProp.getValue();
-        }
-
         sshEnabled = sshEnabledProp.getBooleanValue();
         if (sshEnabled) {
             sshPort = sshPortProp.getIntValue();
@@ -395,22 +373,6 @@ public class JGitFileSystemProviderConfiguration {
 
     public boolean isSslVerify() {
         return sslVerify;
-    }
-
-    public boolean isDaemonEnabled() {
-        return daemonEnabled;
-    }
-
-    public int getDaemonPort() {
-        return daemonPort;
-    }
-
-    public String getDaemonHostAddr() {
-        return daemonHostAddr;
-    }
-
-    public String getDaemonHostName() {
-        return daemonHostName;
     }
 
     public boolean isSshEnabled() {

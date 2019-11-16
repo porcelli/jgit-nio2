@@ -367,14 +367,6 @@ public class JGitFileSystemImpl extends JGitFileSystem {
     }
 
     @Override
-    public void dispose() throws IOException {
-        if (!isClosed) {
-            close();
-        }
-        provider.onDisposeFileSystem(this);
-    }
-
-    @Override
     public boolean isOnBatch() {
         return state.equals(FileSystemState.BATCH);
     }

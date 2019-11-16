@@ -23,8 +23,6 @@ import java.util.Map;
 
 import org.junit.Test;
 
-import static me.porcelli.nio.jgit.impl.JGitFileSystemProviderConfiguration.GIT_DAEMON_ENABLED;
-import static me.porcelli.nio.jgit.impl.JGitFileSystemProviderConfiguration.GIT_DAEMON_PORT;
 import static org.junit.Assert.assertTrue;
 
 public class JGitFileSystemProxyTest extends AbstractTestInfra {
@@ -34,12 +32,8 @@ public class JGitFileSystemProxyTest extends AbstractTestInfra {
     @Override
     public Map<String, String> getGitPreferences() {
         Map<String, String> gitPrefs = super.getGitPreferences();
-        gitPrefs.put(GIT_DAEMON_ENABLED,
-                     "true");
         // use different port for every test -> easy to run tests in parallel
         gitDaemonPort = findFreePort();
-        gitPrefs.put(GIT_DAEMON_PORT,
-                     String.valueOf(gitDaemonPort));
         return gitPrefs;
     }
 

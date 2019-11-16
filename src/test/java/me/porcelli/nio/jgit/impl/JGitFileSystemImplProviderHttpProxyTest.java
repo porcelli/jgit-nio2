@@ -27,7 +27,6 @@ import java.util.HashMap;
 import org.junit.Test;
 
 import static java.net.Authenticator.requestPasswordAuthentication;
-import static me.porcelli.nio.jgit.impl.JGitFileSystemProviderConfiguration.GIT_DAEMON_ENABLED;
 import static me.porcelli.nio.jgit.impl.JGitFileSystemProviderConfiguration.GIT_SSH_ENABLED;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
@@ -44,8 +43,6 @@ public class JGitFileSystemImplProviderHttpProxyTest {
                 "user");
             put("http.proxyPassword",
                 "passwd");
-            put(GIT_DAEMON_ENABLED,
-                "false");
             put(GIT_SSH_ENABLED,
                 "false");
         }});
@@ -64,7 +61,7 @@ public class JGitFileSystemImplProviderHttpProxyTest {
         assertEquals(passw,
                      new String(passwdAuth.getPassword()));
 
-        provider.dispose();
+        provider.close();
     }
 
     @Test
@@ -77,8 +74,6 @@ public class JGitFileSystemImplProviderHttpProxyTest {
                 "user");
             put("https.proxyPassword",
                 "passwd");
-            put(GIT_DAEMON_ENABLED,
-                "false");
             put(GIT_SSH_ENABLED,
                 "false");
         }});
@@ -97,13 +92,12 @@ public class JGitFileSystemImplProviderHttpProxyTest {
         assertEquals(passw,
                      new String(passwdAuth.getPassword()));
 
-        provider.dispose();
+        provider.close();
     }
 
     @Test
     public void testNoProxyInfo() throws IOException {
         final JGitFileSystemProvider provider = new JGitFileSystemProvider(new HashMap<String, String>() {{
-            put(GIT_DAEMON_ENABLED, "false");
             put(GIT_SSH_ENABLED, "false");
         }});
 
@@ -133,6 +127,6 @@ public class JGitFileSystemImplProviderHttpProxyTest {
             assertNull(passwdAuth);
         }
 
-        provider.dispose();
+        provider.close();
     }
 }

@@ -50,11 +50,6 @@ public class HTTPSupportDisableTest extends AbstractTestInfra {
     }
 
     @Test
-    public void testRoot() {
-        assertThat(provider.getFullHostNames().get("http")).isNull();
-    }
-
-    @Test
     public void test() {
         final HTTPSupport httpSupport = new HTTPSupport() {
             @Override
@@ -67,7 +62,6 @@ public class HTTPSupportDisableTest extends AbstractTestInfra {
         final ServletContext sc = mock(ServletContext.class);
         when(sce.getServletContext()).thenReturn(sc);
         httpSupport.contextInitialized(sce);
-        assertFalse(provider.getFullHostNames().containsKey("http"));
 
         verify(sc, times(0)).addServlet(anyString(), any(Servlet.class));
     }

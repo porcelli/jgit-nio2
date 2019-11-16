@@ -17,6 +17,7 @@
 
 package me.porcelli.nio.jgit.impl;
 
+import java.io.Closeable;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -146,6 +147,7 @@ import static me.porcelli.nio.jgit.impl.JGitFileSystemProviderConfiguration.DEFA
 import static me.porcelli.nio.jgit.impl.JGitFileSystemProviderConfiguration.GIT_ENV_KEY_BRANCH_LIST;
 import static me.porcelli.nio.jgit.impl.JGitFileSystemProviderConfiguration.GIT_ENV_KEY_DEFAULT_REMOTE_NAME;
 import static me.porcelli.nio.jgit.impl.JGitFileSystemProviderConfiguration.GIT_ENV_KEY_DEST_PATH;
+import static me.porcelli.nio.jgit.impl.JGitFileSystemProviderConfiguration.GIT_ENV_KEY_FULL_HOST_NAMES;
 import static me.porcelli.nio.jgit.impl.JGitFileSystemProviderConfiguration.GIT_ENV_KEY_INIT;
 import static me.porcelli.nio.jgit.impl.JGitFileSystemProviderConfiguration.GIT_ENV_KEY_MIRROR;
 import static me.porcelli.nio.jgit.impl.JGitFileSystemProviderConfiguration.GIT_ENV_KEY_PASSWORD;
@@ -160,13 +162,13 @@ import static me.porcelli.nio.jgit.impl.util.Preconditions.checkNotEmpty;
 import static me.porcelli.nio.jgit.impl.util.Preconditions.checkNotNull;
 import static org.eclipse.jgit.lib.Constants.DOT_GIT_EXT;
 
-public class JGitFileSystemProvider extends SecuredFileSystemProvider implements Disposable {
+public class JGitFileSystemProvider extends SecuredFileSystemProvider implements Closeable {
 
     private static final Logger LOG = LoggerFactory.getLogger(JGitFileSystemProvider.class);
     private static final TimeUnit LOCK_LAST_ACCESS_TIME_UNIT = TimeUnit.SECONDS;
     private static final long LOCK_LAST_ACCESS_THRESHOLD = 10;
 
-    private final Map<String, String> fullHostNames = new HashMap<>();
+//    private final Map<String, String> fullHostNames = new HashMap<>();
 
     private final Object postponedEventsLock = new Object();
 
@@ -233,8 +235,6 @@ public class JGitFileSystemProvider extends SecuredFileSystemProvider implements
 
         setupFullHostNames();
 
-        setupDaemon();
-
         setupGitSSH();
     }
 
@@ -261,23 +261,16 @@ public class JGitFileSystemProvider extends SecuredFileSystemProvider implements
         }
     }
 
-    private void setupDaemon() {
-        if (config.isDaemonEnabled()) {
-            buildAndStartDaemon();
-        } else {
-            daemonService = null;
-        }
-    }
-
     private void setupFullHostNames() {
-        if (config.isDaemonEnabled()) {
-            fullHostNames.put("git",
-                              config.getDaemonHostName() + ":" + config.getDaemonPort());
-        }
-        if (config.isSshEnabled()) {
-            fullHostNames.put("ssh",
-                              config.getSshHostName() + ":" + config.getSshPort());
-        }
+        //TODO: needs add to it
+//        if (config.isDaemonEnabled()) {
+//            fullHostNames.put("git",
+//                              config.getDaemonHostName() + ":" + config.getDaemonPort());
+//        }
+//        if (config.isSshEnabled()) {
+//            fullHostNames.put("ssh",
+//                              config.getSshHostName() + ":" + config.getSshPort());
+//        }
     }
 
     private void setupSSH() {
@@ -355,18 +348,22 @@ public class JGitFileSystemProvider extends SecuredFileSystemProvider implements
         }
     }
 
+    public JGitFileSystemsManager getFSManager() {
+        return fsManager;
+    }
+
     @Override
-    public void dispose() {
+    public void close() throws IOException {
         shutdown();
     }
 
-    public void addHostName(final String protocol, String s) {
-        fullHostNames.put(protocol, s);
-    }
+//    public void addHostName(final String protocol, String s) {
+//        fullHostNames.put(protocol, s);
+//    }
 
-    public Map<String, String> getFullHostNames() {
-        return new HashMap<>(fullHostNames);
-    }
+//    public Map<String, String> getFullHostNames() {
+//        return new HashMap<>(fullHostNames);
+//    }
 
     public class RepositoryResolverImpl<T> implements RepositoryResolver<T> {
 
@@ -475,22 +472,6 @@ public class JGitFileSystemProvider extends SecuredFileSystemProvider implements
         return new RepositoryResolverImpl<>();
     }
 
-    void buildAndStartDaemon() {
-        if (daemonService == null || !daemonService.isRunning()) {
-            daemonService = new Daemon(new InetSocketAddress(config.getDaemonHostAddr(),
-                                                             config.getDaemonPort()),
-                                       new ExecutorWrapper(executorService),
-                                       executorService,
-                                       config.isEnableKetch() ? leaders : null);
-            daemonService.setRepositoryResolver(new RepositoryResolverImpl<>());
-            try {
-                daemonService.start();
-            } catch (java.io.IOException e) {
-                throw new RuntimeException(e);
-            }
-        }
-    }
-
     private void shutdownSSH() {
         if (gitSSHService != null) {
             gitSSHService.stop();
@@ -562,6 +543,8 @@ public class JGitFileSystemProvider extends SecuredFileSystemProvider implements
                                                 env);
         String envPassword = extractEnvProperty(GIT_ENV_KEY_PASSWORD,
                                                 env);
+        Map<String, String> fullHostNames = extractMapProperty(GIT_ENV_KEY_FULL_HOST_NAMES,
+                                                               env);
 
         fsManager.newFileSystem(() -> fullHostNames,
                                 () -> createNewGitRepo(env,
@@ -601,10 +584,6 @@ public class JGitFileSystemProvider extends SecuredFileSystemProvider implements
         if (config.isEnableKetch()) {
             createNewGitRepo(env,
                              fsName).enableKetch();
-        }
-
-        if (config.isDaemonEnabled() && daemonService != null && !daemonService.isRunning()) {
-            buildAndStartDaemon();
         }
 
         return fs;
@@ -647,6 +626,14 @@ public class JGitFileSystemProvider extends SecuredFileSystemProvider implements
             return null;
         }
         return env.get(key).toString();
+    }
+
+    private Map<String, String> extractMapProperty(final String key,
+                                                   final Map<String, ?> env) {
+        if (env == null || env.get(key) == null) {
+            return null;
+        }
+        return (Map<String, String>) env.get(key);
     }
 
     protected Git createNewGitRepo(Map<String, ?> env,
@@ -983,7 +970,7 @@ public class JGitFileSystemProvider extends SecuredFileSystemProvider implements
         final PathInfo result = cast(gPath.getFileSystem()).getGit().getPathInfo(gPath.getRefTree(),
                                                                                  gPath.getPath());
 
-        if (result.getPathType().equals(PathType.DIRECTORY)) {
+        if (result.getPathType().equals(DIRECTORY)) {
             throw new NotDirectoryException(path.toString());
         }
 
@@ -992,7 +979,7 @@ public class JGitFileSystemProvider extends SecuredFileSystemProvider implements
                                                   "woot");
             return new FilterOutputStream(new FileOutputStream(file)) {
                 @Override
-                public void close() throws java.io.IOException {
+                public void close() throws IOException {
                     super.close();
 
                     commit(gPath,
@@ -1004,7 +991,7 @@ public class JGitFileSystemProvider extends SecuredFileSystemProvider implements
                            }}));
                 }
             };
-        } catch (java.io.IOException e) {
+        } catch (IOException e) {
             throw new IOException("Could not create file or output stream.",
                                   e);
         }
@@ -1087,7 +1074,7 @@ public class JGitFileSystemProvider extends SecuredFileSystemProvider implements
         final PathInfo result = cast(gPath.getFileSystem()).getGit().getPathInfo(gPath.getRefTree(),
                                                                                  gPath.getPath());
 
-        if (result.getPathType().equals(PathType.DIRECTORY)) {
+        if (result.getPathType().equals(DIRECTORY)) {
             throw new NotDirectoryException(path.toString());
         }
 
@@ -1100,7 +1087,7 @@ public class JGitFileSystemProvider extends SecuredFileSystemProvider implements
                                              gPath,
                                              attrs);
             }
-        } catch (java.io.IOException e) {
+        } catch (IOException e) {
             throw new IOException("Failed to open or create a byte channel.",
                                   e);
         } finally {
@@ -1111,13 +1098,13 @@ public class JGitFileSystemProvider extends SecuredFileSystemProvider implements
     private SeekableByteChannel createANewByteChannel(final Path path,
                                                       final Set<? extends OpenOption> options,
                                                       final JGitPathImpl gPath,
-                                                      final FileAttribute<?>[] attrs) throws java.io.IOException {
+                                                      final FileAttribute<?>[] attrs) throws IOException {
         final File file = File.createTempFile("gitz",
                                               "woot");
 
         return new SeekableByteChannelWrapper(new RandomAccessFile(file, "rw").getChannel()) {
             @Override
-            public void close() throws java.io.IOException {
+            public void close() throws IOException {
                 super.close();
                 commit(gPath,
                        buildCommitInfo("{" + toPathImpl(path).getPath() + "}",
@@ -1167,7 +1154,7 @@ public class JGitFileSystemProvider extends SecuredFileSystemProvider implements
         final PathInfo result = cast(gPath.getFileSystem()).getGit().getPathInfo(gPath.getRefTree(),
                                                                                  gPath.getPath());
 
-        if (!result.getPathType().equals(PathType.DIRECTORY)) {
+        if (!result.getPathType().equals(DIRECTORY)) {
             throw new NotDirectoryException(path.toString());
         }
 
@@ -1331,7 +1318,6 @@ public class JGitFileSystemProvider extends SecuredFileSystemProvider implements
         try {
             physicalLock.lock();
             fileSystem.close();
-            fileSystem.dispose();
             if (System.getProperty("os.name").toLowerCase().contains("windows")) {
                 //this operation forces a cache clean freeing any lock -> windows only issue!
                 new WindowCacheConfig().install();
@@ -1344,7 +1330,7 @@ public class JGitFileSystemProvider extends SecuredFileSystemProvider implements
 
             cleanupParentDir(gitDir);
             return true;
-        } catch (java.io.IOException e) {
+        } catch (IOException e) {
             throw new IOException("Failed to remove the git repository.",
                                   e);
         } finally {
@@ -1352,7 +1338,7 @@ public class JGitFileSystemProvider extends SecuredFileSystemProvider implements
         }
     }
 
-    private void cleanupParentDir(File gitDir) throws java.io.IOException {
+    private void cleanupParentDir(File gitDir) throws IOException {
         final File parentDir = gitDir.getParentFile();
         if (parentDir.isDirectory() && parentDirIsEmpty(parentDir) && !parentDir.equals(getGitRepoContainerDir())) {
             FileUtils.delete(parentDir,
@@ -1368,7 +1354,7 @@ public class JGitFileSystemProvider extends SecuredFileSystemProvider implements
         final PathInfo result = cast(path.getFileSystem()).getGit().getPathInfo(path.getRefTree(),
                                                                                 path.getPath());
 
-        if (result.getPathType().equals(PathType.DIRECTORY)) {
+        if (result.getPathType().equals(DIRECTORY)) {
             if (deleteNonEmptyDirectory()) {
                 deleteResource(path);
                 return;
@@ -1445,7 +1431,7 @@ public class JGitFileSystemProvider extends SecuredFileSystemProvider implements
         final PathInfo result = cast(path.getFileSystem()).getGit().getPathInfo(path.getRefTree(),
                                                                                 path.getPath());
 
-        if (result.getPathType().equals(PathType.DIRECTORY)) {
+        if (result.getPathType().equals(DIRECTORY)) {
             if (deleteNonEmptyDirectory()) {
                 deleteResource(path);
                 return true;
@@ -1693,7 +1679,7 @@ public class JGitFileSystemProvider extends SecuredFileSystemProvider implements
                                               convert(options));
         final SeekableByteChannel out = newByteChannel(target,
                                                        new HashSet<OpenOption>() {{
-                                                           add(StandardOpenOption.TRUNCATE_EXISTING);
+                                                           add(TRUNCATE_EXISTING);
                                                            for (final CopyOption _option : options) {
                                                                if (_option instanceof OpenOption) {
                                                                    add((OpenOption) _option);
@@ -1715,13 +1701,13 @@ public class JGitFileSystemProvider extends SecuredFileSystemProvider implements
         } finally {
             try {
                 out.close();
-            } catch (java.io.IOException e) {
+            } catch (IOException e) {
                 throw new IOException("Could not close output stream.",
                                       e);
             } finally {
                 try {
                     in.close();
-                } catch (java.io.IOException e) {
+                } catch (IOException e) {
                     throw new IOException("Could not close input stream.",
                                           e);
                 }
@@ -2347,7 +2333,7 @@ public class JGitFileSystemProvider extends SecuredFileSystemProvider implements
                         final CommitInfo commitInfo,
                         final CommitContent commitContent) {
 
-        final JGitFileSystem fileSystem = (JGitFileSystem) path.getFileSystem();
+        final JGitFileSystem fileSystem = path.getFileSystem();
         try {
             fileSystem.lock();
 

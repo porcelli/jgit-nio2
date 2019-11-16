@@ -54,8 +54,6 @@ public class HTTPSOnlySupportTest extends AbstractTestInfra {
     @Test
     public void testRoot() {
         base("/");
-        assertThat(provider.getFullHostNames().get("http")).isNull();
-        assertThat(provider.getFullHostNames().get("https")).isNotNull();
     }
 
     public void base(final String contextPath) {

@@ -17,6 +17,7 @@
 
 package me.porcelli.nio.jgit.impl;
 
+import java.io.Closeable;
 import java.nio.file.FileSystem;
 import java.nio.file.Path;
 import java.nio.file.WatchEvent;
@@ -33,7 +34,7 @@ import org.eclipse.jgit.transport.UploadPack;
 public abstract class JGitFileSystem extends FileSystem implements FileSystemStateAware,
                                                                    FileSystemId,
                                                                    LockableFileSystem,
-                                                                   Disposable {
+                                                                   Closeable {
 
     abstract public Git getGit();
 

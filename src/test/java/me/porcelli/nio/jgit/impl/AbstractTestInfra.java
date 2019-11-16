@@ -63,7 +63,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static java.util.stream.Collectors.toMap;
-import static me.porcelli.nio.jgit.impl.JGitFileSystemProviderConfiguration.GIT_DAEMON_ENABLED;
 import static me.porcelli.nio.jgit.impl.JGitFileSystemProviderConfiguration.GIT_SSH_ENABLED;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -101,7 +100,6 @@ public abstract class AbstractTestInfra {
     public Map<String, String> getGitPreferences() {
         Map<String, String> gitPrefs = new HashMap<>();
         // disable the daemons by default as they not needed in most of the cases
-        gitPrefs.put(GIT_DAEMON_ENABLED, "false");
         gitPrefs.put(GIT_SSH_ENABLED, "false");
         return gitPrefs;
     }
