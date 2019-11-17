@@ -58,6 +58,11 @@ public class JGitFileSystemProxy extends JGitFileSystem {
     }
 
     @Override
+    public boolean authorize(User user) {
+        return cachedSupplier.get().authorize(user);
+    }
+
+    @Override
     public Git getGit() {
         return cachedSupplier.get().getGit();
     }

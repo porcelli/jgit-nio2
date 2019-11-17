@@ -35,6 +35,7 @@ import me.porcelli.nio.jgit.impl.JGitFileSystemProviderConfiguration;
 import me.porcelli.nio.jgit.impl.JGitFileSystemsEventsManager;
 import me.porcelli.nio.jgit.impl.hook.FileSystemHooks;
 import me.porcelli.nio.jgit.impl.op.Git;
+import me.porcelli.nio.jgit.security.FileSystemAuthorization;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.transport.CredentialsProvider;
 
@@ -65,6 +66,7 @@ public class JGitFileSystemsManager {
                               Supplier<Git> git,
                               Supplier<String> fsName,
                               Supplier<CredentialsProvider> credential,
+                              Supplier<FileSystemAuthorization> authorization,
                               Supplier<JGitFileSystemsEventsManager> fsManager,
                               Supplier<Map<FileSystemHooks, ?>> fsHooks) {
 
@@ -72,11 +74,11 @@ public class JGitFileSystemsManager {
                                                                        git,
                                                                        fsName,
                                                                        credential,
+                                                                       authorization,
                                                                        fsManager,
                                                                        fsHooks);
 
-        fsCache.addSupplier(fsName.get(),
-                            fsSupplier);
+        fsCache.addSupplier(fsName.get(), fsSupplier);
         fileSystemsRoot.addAll(parseFSRoots(fsName.get()));
     }
 
@@ -85,10 +87,8 @@ public class JGitFileSystemsManager {
         fsKey = cleanupFsName(fsKey);
         int index = fsKey.indexOf("/");
         while (index >= 0) {
-            roots.add(fsKey.substring(0,
-                                      index));
-            index = fsKey.indexOf("/",
-                                  index + 1);
+            roots.add(fsKey.substring(0, index));
+            index = fsKey.indexOf("/", index + 1);
         }
         roots.add(fsKey);
         return roots;
@@ -99,8 +99,7 @@ public class JGitFileSystemsManager {
             fsKey = fsKey.substring(1);
         }
         if (fsKey.endsWith("/")) {
-            fsKey = fsKey.substring(0,
-                                    fsKey.length() - 1);
+            fsKey = fsKey.substring(0, fsKey.length() - 1);
         }
 
         return fsKey;
@@ -110,6 +109,7 @@ public class JGitFileSystemsManager {
                                                               Supplier<Git> git,
                                                               Supplier<String> fsName,
                                                               Supplier<CredentialsProvider> credential,
+                                                              Supplier<FileSystemAuthorization> authorization,
                                                               Supplier<JGitFileSystemsEventsManager> fsManager,
                                                               Supplier<Map<FileSystemHooks, ?>> fsHooks) {
 
@@ -117,6 +117,7 @@ public class JGitFileSystemsManager {
                                    git.get(),
                                    fsName.get(),
                                    credential.get(),
+                                   authorization.get(),
                                    fsManager.get(),
                                    fsHooks.get());
     }
@@ -125,6 +126,7 @@ public class JGitFileSystemsManager {
                                          Git git,
                                          String fsName,
                                          CredentialsProvider credential,
+                                         FileSystemAuthorization authorization,
                                          JGitFileSystemsEventsManager fsEventsManager,
                                          Map<FileSystemHooks, ?> fsHooks) {
         fileSystemsLocks.putIfAbsent(fsName, createLock(git));
@@ -134,6 +136,7 @@ public class JGitFileSystemsManager {
                                                          fileSystemsLocks.get(fsName),
                                                          fsName,
                                                          credential,
+                                                         authorization,
                                                          fsEventsManager,
                                                          fsHooks);
 

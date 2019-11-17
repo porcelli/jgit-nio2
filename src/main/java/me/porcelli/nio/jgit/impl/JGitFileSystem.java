@@ -93,4 +93,6 @@ public abstract class JGitFileSystem extends FileSystem implements FileSystemSta
                                             User user);
 
     public abstract String getName();
+
+    public abstract boolean authorize(User user);
 }

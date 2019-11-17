@@ -68,6 +68,7 @@ public class JGitFileSystemsManagerTest {
                               () -> git,
                               () -> fs.getName(),
                               () -> mock(CredentialsProvider.class),
+                              () -> (u) -> true,
                               () -> mock(JGitFileSystemsEventsManager.class),
                               () -> null);
 
@@ -75,6 +76,7 @@ public class JGitFileSystemsManagerTest {
                               () -> git,
                               () -> fs1.getName(),
                               () -> mock(CredentialsProvider.class),
+                              () -> (u) -> true,
                               () -> mock(JGitFileSystemsEventsManager.class),
                               () -> null);
 
@@ -137,6 +139,7 @@ public class JGitFileSystemsManagerTest {
                               () -> git,
                               () -> fs.getName(),
                               () -> mock(CredentialsProvider.class),
+                              () -> (u) -> true,
                               () -> mock(JGitFileSystemsEventsManager.class),
                               () -> null);
 
@@ -144,6 +147,7 @@ public class JGitFileSystemsManagerTest {
                               () -> git,
                               () -> fs1.getName(),
                               () -> mock(CredentialsProvider.class),
+                              () -> (u) -> true,
                               () -> mock(JGitFileSystemsEventsManager.class),
                               () -> null);
 

@@ -17,7 +17,6 @@ import org.eclipse.jgit.transport.resolver.ServiceNotAuthorizedException;
 public class RepositoryResolverImpl<T> implements RepositoryResolver<T> {
 
     private JGitFileSystemsManager fsManager;
-    private FileSystemAuthorization authorizer = (fs, user) -> true;
 
     public RepositoryResolverImpl(JGitFileSystemsManager fsManager) {
         this.fsManager = fsManager;
@@ -32,9 +31,7 @@ public class RepositoryResolverImpl<T> implements RepositoryResolver<T> {
         if (fs == null) {
             throw new RepositoryNotFoundException(name);
         }
-
-        if (authorizer != null && !authorizer.authorize(fs,
-                                                        user)) {
+        if (!fs.authorize(user)) {
             throw new ServiceNotAuthorizedException("User not authorized.");
         }
 

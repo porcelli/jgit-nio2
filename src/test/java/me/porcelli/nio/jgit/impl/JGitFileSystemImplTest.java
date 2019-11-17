@@ -56,6 +56,7 @@ public class JGitFileSystemImplTest extends AbstractTestInfra {
                                                                      createFSLock(git),
                                                                      "my-repo",
                                                                      CredentialsProvider.getDefault(),
+                                                                     (u) -> true,
                                                                      null,
                                                                      null);
 
@@ -83,6 +84,7 @@ public class JGitFileSystemImplTest extends AbstractTestInfra {
                                                                      createFSLock(git),
                                                                      "my-repo",
                                                                      CredentialsProvider.getDefault(),
+                                                                     (u) -> true,
                                                                      null,
                                                                      null);
 
@@ -115,6 +117,7 @@ public class JGitFileSystemImplTest extends AbstractTestInfra {
                                                                      createFSLock(git),
                                                                      "my-repo",
                                                                      CredentialsProvider.getDefault(),
+                                                                     (u) -> true,
                                                                      null,
                                                                      null);
 
@@ -137,6 +140,7 @@ public class JGitFileSystemImplTest extends AbstractTestInfra {
                                                                      createFSLock(git),
                                                                      "my-repo",
                                                                      CredentialsProvider.getDefault(),
+                                                                     (u) -> true,
                                                                      null,
                                                                      null);
 
@@ -163,6 +167,7 @@ public class JGitFileSystemImplTest extends AbstractTestInfra {
                                                                      createFSLock(git),
                                                                      "my-repo",
                                                                      CredentialsProvider.getDefault(),
+                                                                     (u) -> true,
                                                                      null,
                                                                      null);
 
@@ -187,6 +192,7 @@ public class JGitFileSystemImplTest extends AbstractTestInfra {
                                                                      createFSLock(git),
                                                                      "my-repo",
                                                                      CredentialsProvider.getDefault(),
+                                                                     (u) -> true,
                                                                      null,
                                                                      null);
 
@@ -216,6 +222,7 @@ public class JGitFileSystemImplTest extends AbstractTestInfra {
                                                                      createFSLock(git),
                                                                      "my-repo",
                                                                      CredentialsProvider.getDefault(),
+                                                                     (u) -> true,
                                                                      null,
                                                                      null);
 
@@ -245,6 +252,7 @@ public class JGitFileSystemImplTest extends AbstractTestInfra {
                                                                      createFSLock(git),
                                                                      "my-repo",
                                                                      CredentialsProvider.getDefault(),
+                                                                     (u) -> true,
                                                                      null,
                                                                      null);
 
@@ -275,6 +283,7 @@ public class JGitFileSystemImplTest extends AbstractTestInfra {
                                                                      createFSLock(git),
                                                                      "my-repo",
                                                                      CredentialsProvider.getDefault(),
+                                                                     (u) -> true,
                                                                      null,
                                                                      null);
 
@@ -305,6 +314,7 @@ public class JGitFileSystemImplTest extends AbstractTestInfra {
                                                                      createFSLock(git),
                                                                      "my-repo",
                                                                      CredentialsProvider.getDefault(),
+                                                                     (u) -> true,
                                                                      null,
                                                                      null);
 
@@ -336,6 +346,7 @@ public class JGitFileSystemImplTest extends AbstractTestInfra {
                                                                      createFSLock(git),
                                                                      "my-repo",
                                                                      CredentialsProvider.getDefault(),
+                                                                     (u) -> true,
                                                                      null,
                                                                      null);
 
@@ -367,6 +378,7 @@ public class JGitFileSystemImplTest extends AbstractTestInfra {
                                                                      createFSLock(git),
                                                                      "my-repo",
                                                                      CredentialsProvider.getDefault(),
+                                                                     (u) -> true,
                                                                      null,
                                                                      null);
 
@@ -390,6 +402,7 @@ public class JGitFileSystemImplTest extends AbstractTestInfra {
                                                                       createFSLock(git1),
                                                                       "my-repo1",
                                                                       CredentialsProvider.getDefault(),
+                                                                      (u) -> true,
                                                                       null,
                                                                       null);
 
@@ -401,6 +414,7 @@ public class JGitFileSystemImplTest extends AbstractTestInfra {
                                                                       createFSLock(git2),
                                                                       "my-repo2",
                                                                       CredentialsProvider.getDefault(),
+                                                                      (u) -> true,
                                                                       null,
                                                                       null);
 
@@ -426,6 +440,7 @@ public class JGitFileSystemImplTest extends AbstractTestInfra {
                                                                      createFSLock(git),
                                                                      "my-repo",
                                                                      CredentialsProvider.getDefault(),
+                                                                     (u) -> true,
                                                                      null,
                                                                      null);
         fileSystem.getUserPrincipalLookupService();
@@ -443,6 +458,7 @@ public class JGitFileSystemImplTest extends AbstractTestInfra {
                                                                      createFSLock(git),
                                                                      "my-repo",
                                                                      CredentialsProvider.getDefault(),
+                                                                     (u) -> true,
                                                                      null,
                                                                      null);
         fileSystem.getPathMatcher("*");
@@ -460,6 +476,7 @@ public class JGitFileSystemImplTest extends AbstractTestInfra {
                                                                      createFSLock(git),
                                                                      "my-repo",
                                                                      CredentialsProvider.getDefault(),
+                                                                     (u) -> true,
                                                                      null,
                                                                      null);
 

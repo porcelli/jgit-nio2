@@ -56,6 +56,7 @@ import java.nio.file.attribute.BasicFileAttributeView;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.FileAttributeView;
+import java.nio.file.spi.FileSystemProvider;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -131,6 +132,7 @@ import static java.nio.file.StandardOpenOption.READ;
 import static java.nio.file.StandardOpenOption.TRUNCATE_EXISTING;
 import static java.util.Collections.emptyList;
 import static me.porcelli.nio.jgit.impl.JGitFileSystemProviderConfiguration.DEFAULT_SCHEME_SIZE;
+import static me.porcelli.nio.jgit.impl.JGitFileSystemProviderConfiguration.GIT_ENV_KEY_AUTHZ_PROVIDER;
 import static me.porcelli.nio.jgit.impl.JGitFileSystemProviderConfiguration.GIT_ENV_KEY_BRANCH_LIST;
 import static me.porcelli.nio.jgit.impl.JGitFileSystemProviderConfiguration.GIT_ENV_KEY_DEFAULT_REMOTE_NAME;
 import static me.porcelli.nio.jgit.impl.JGitFileSystemProviderConfiguration.GIT_ENV_KEY_DEST_PATH;
@@ -149,7 +151,7 @@ import static me.porcelli.nio.jgit.impl.util.Preconditions.checkNotEmpty;
 import static me.porcelli.nio.jgit.impl.util.Preconditions.checkNotNull;
 import static org.eclipse.jgit.lib.Constants.DOT_GIT_EXT;
 
-public class JGitFileSystemProvider extends SecuredFileSystemProvider implements Closeable {
+public class JGitFileSystemProvider extends FileSystemProvider implements Closeable {
 
     public static final JGitFileSystemProvider PROVIDER = new JGitFileSystemProvider();
 
@@ -166,7 +168,6 @@ public class JGitFileSystemProvider extends SecuredFileSystemProvider implements
     final KetchLeaderCache leaders = new KetchLeaderCache(system);
 
     private AuthenticationService httpAuthenticator;
-    private FileSystemAuthorization authorizer;
 
     JGitFileSystemProviderConfiguration config;
 
@@ -271,16 +272,6 @@ public class JGitFileSystemProvider extends SecuredFileSystemProvider implements
         fsManager.remove(fileSystem.id());
     }
 
-    @Override
-    public void setAuthorizer(FileSystemAuthorization authorizer) {
-        this.authorizer = checkNotNull("authorizer", authorizer);
-    }
-
-    @Override
-    public void setHTTPAuthenticator(final AuthenticationService httpAuthenticator) {
-        this.httpAuthenticator = httpAuthenticator;
-    }
-
     public JGitFileSystemsManager getFSManager() {
         return fsManager;
     }
@@ -289,31 +280,6 @@ public class JGitFileSystemProvider extends SecuredFileSystemProvider implements
     public void close() throws IOException {
         shutdown();
     }
-
-//    public class RepositoryResolverImpl<T> implements RepositoryResolver<T> {
-//
-//        @Override
-//        public Repository open(final T client,
-//                               final String name)
-//                throws RepositoryNotFoundException, ServiceNotAuthorizedException {
-//            final User user = extractUser(client);
-//            final JGitFileSystem fs = fsManager.get(name);
-//            if (fs == null) {
-//                throw new RepositoryNotFoundException(name);
-//            }
-//
-//            if (authorizer != null && !authorizer.authorize(fs,
-//                                                            user)) {
-//                throw new ServiceNotAuthorizedException("User not authorized.");
-//            }
-//
-//            return fs.getGit().getRepository();
-//        }
-//
-//        public JGitFileSystem resolveFileSystem(final Repository repository) {
-//            return fsManager.get(repository);
-//        }
-//    }
 
     private User extractUser(Object client) {
         if (httpAuthenticator != null && client instanceof HttpServletRequest) {
@@ -367,10 +333,6 @@ public class JGitFileSystemProvider extends SecuredFileSystemProvider implements
         };
     }
 
-//    public <T> RepositoryResolverImpl<T> getRepositoryResolver() {
-//        return new RepositoryResolverImpl<>();
-//    }
-
     /**
      * Closes and disposes all open filesystems and stops the Git and SSH daemons if they are running. This filesystem
      * provider can be reactivated by attempting to open a new filesystem or by creating a new filesystem.
@@ -409,26 +371,27 @@ public class JGitFileSystemProvider extends SecuredFileSystemProvider implements
     public FileSystem newFileSystem(final URI uri,
                                     final Map<String, ?> env)
             throws IllegalArgumentException, IOException, SecurityException, FileSystemAlreadyExistsException {
-        checkNotNull("uri",
-                     uri);
-        checkCondition("uri scheme not supported",
-                       uri.getScheme().equals(getScheme()));
-        checkURI("uri",
-                 uri);
-        checkNotNull("env",
-                     env);
+        checkNotNull("uri", uri);
+        checkCondition("uri scheme not supported", uri.getScheme().equals(getScheme()));
+        checkURI("uri", uri);
+        checkNotNull("env", env);
 
         String fsName = extractFSName(uri);
 
-        validateFSName(uri,
-                       fsName);
+        validateFSName(uri, fsName);
 
-        String envUsername = extractEnvProperty(GIT_ENV_KEY_USER_NAME,
-                                                env);
-        String envPassword = extractEnvProperty(GIT_ENV_KEY_PASSWORD,
-                                                env);
-        Map<String, String> fullHostNames = extractMapProperty(GIT_ENV_KEY_FULL_HOST_NAMES,
-                                                               env);
+        final String envUsername = extractEnvProperty(GIT_ENV_KEY_USER_NAME,
+                                                      env);
+        final String envPassword = extractEnvProperty(GIT_ENV_KEY_PASSWORD,
+                                                      env);
+        final Map<String, String> fullHostNames = extractMapProperty(GIT_ENV_KEY_FULL_HOST_NAMES,
+                                                                     env);
+        final FileSystemAuthorization authorization;
+        if (env.containsKey(GIT_ENV_KEY_AUTHZ_PROVIDER)) {
+            authorization = (FileSystemAuthorization) env.get(GIT_ENV_KEY_AUTHZ_PROVIDER);
+        } else {
+            authorization = (u) -> true;
+        }
 
         fsManager.newFileSystem(() -> fullHostNames,
                                 () -> createNewGitRepo(env,
@@ -436,6 +399,7 @@ public class JGitFileSystemProvider extends SecuredFileSystemProvider implements
                                 () -> fsName,
                                 () -> buildCredential(envUsername,
                                                       envPassword),
+                                () -> authorization,
                                 () -> fsEventsManager,
                                 () -> extractFSHooks(env));
 

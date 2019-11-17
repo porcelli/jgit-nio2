@@ -286,6 +286,7 @@ public class JGitFileSystemsCacheTest extends AbstractTestInfra {
                                                                                      config.getJgitCacheEvictThresholdDuration()),
                                                               "fs1",
                                                               CredentialsProvider.getDefault(),
+                                                              (u) -> true,
                                                               null,
                                                               null);
 

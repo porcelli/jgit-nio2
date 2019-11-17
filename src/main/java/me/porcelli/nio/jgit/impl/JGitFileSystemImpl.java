@@ -48,6 +48,7 @@ import me.porcelli.nio.jgit.impl.hook.FileSystemHooksConstants;
 import me.porcelli.nio.jgit.impl.hook.JGitFSHooks;
 import me.porcelli.nio.jgit.impl.op.Git;
 import me.porcelli.nio.jgit.impl.op.model.CommitInfo;
+import me.porcelli.nio.jgit.security.FileSystemAuthorization;
 import me.porcelli.nio.jgit.security.User;
 import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.transport.CredentialsProvider;
@@ -74,6 +75,7 @@ public class JGitFileSystemImpl extends JGitFileSystem {
     private boolean isClosed = false;
     private final FileStore fileStore;
     private final String name;
+    private final FileSystemAuthorization authorization;
     private final CredentialsProvider credential;
     private final Map<FileSystemHooks, ?> fsHooks;
     private final AtomicInteger numberOfCommitsSinceLastGC = new AtomicInteger(0);
@@ -91,6 +93,7 @@ public class JGitFileSystemImpl extends JGitFileSystem {
                               final JGitFileSystemLock lock,
                               final String name,
                               final CredentialsProvider credential,
+                              final FileSystemAuthorization authorization,
                               JGitFileSystemsEventsManager fsEventsManager,
                               Map<FileSystemHooks, ?> fsHooks) {
         this.fsEventsManager = fsEventsManager;
@@ -105,6 +108,8 @@ public class JGitFileSystemImpl extends JGitFileSystem {
                                  lock);
         this.credential = checkNotNull("credential",
                                        credential);
+        this.authorization = checkNotNull("authorization",
+                                          authorization);
         this.fsHooks = fsHooks;
         this.fileStore = new JGitFileStore(this.git.getRepository());
         if (fullHostNames != null && !fullHostNames.isEmpty()) {
@@ -131,6 +136,11 @@ public class JGitFileSystemImpl extends JGitFileSystem {
     @Override
     public String getName() {
         return name;
+    }
+
+    @Override
+    public boolean authorize(User user) {
+        return authorization.authorize(user);
     }
 
     @Override

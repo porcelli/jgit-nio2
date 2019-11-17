@@ -17,8 +17,6 @@
 
 package me.porcelli.nio.jgit.security;
 
-import java.nio.file.FileSystem;
-
 /**
  * Strategy for authorizing users to perform actions in a secured file system.
  */
@@ -26,9 +24,8 @@ public interface FileSystemAuthorization {
 
     /**
      * Returns true if the given user is permitted to perform actions within the given file system.
-     * @param fs
      * @param user
      * @return
      */
-    boolean authorize(final FileSystem fs, final User user);
+    boolean authorize(final User user);
 }
