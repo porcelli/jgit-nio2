@@ -71,7 +71,7 @@ public class JGitFileSystemProviderConfiguration {
     public static final String JGIT_CACHE_EVICT_THRESHOLD_DURATION = "nio.jgit.cache.evict.threshold.duration";
     public static final String JGIT_CACHE_EVICT_THRESHOLD_TIME_UNIT = "nio.jgit.cache.evict.threshold.time.unit";
 
-    public static final String GIT_ENV_KEY_DEST_PATH = "out-dir";
+    public static final String GIT_ENV_KEY_DEST_PATH = "storage-dir";
     public static final String GIT_ENV_KEY_USER_NAME = "username";
     public static final String GIT_ENV_KEY_PASSWORD = "password";
     public static final String GIT_ENV_KEY_INIT = "init";
@@ -81,7 +81,6 @@ public class JGitFileSystemProviderConfiguration {
 
     public static final String SCHEME = "git";
     public static final int SCHEME_SIZE = (SCHEME + "://").length();
-    public static final int DEFAULT_SCHEME_SIZE = ("default://").length();
     public static final String DEFAULT_HOST_NAME = "localhost";
     public static final String REPOSITORIES_CONTAINER_DIR = ".niogit";
     public static final String DEFAULT_SSH_OVER_HTTP = "false";
@@ -306,10 +305,6 @@ public class JGitFileSystemProviderConfiguration {
 
     public boolean isSslVerify() {
         return sslVerify;
-    }
-
-    public File getGitReposParentDir() {
-        return gitReposParentDir;
     }
 
     public File getHookDir() {

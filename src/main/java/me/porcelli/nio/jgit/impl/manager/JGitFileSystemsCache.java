@@ -38,7 +38,6 @@ public class JGitFileSystemsCache {
     final Map<String, Supplier<JGitFileSystem>> memoizedSuppliers;
 
     public JGitFileSystemsCache(JGitFileSystemProviderConfiguration config) {
-
         memoizedSuppliers = JGitFileSystemsCacheDataStructure.create(config);
     }
 
@@ -58,7 +57,6 @@ public class JGitFileSystemsCache {
     }
 
     public JGitFileSystem get(String fsName) {
-
         Supplier<JGitFileSystem> memoizedSupplier = memoizedSuppliers.get(fsName);
         if (memoizedSupplier != null) {
             return new JGitFileSystemProxy(fsName,

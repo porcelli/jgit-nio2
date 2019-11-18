@@ -72,8 +72,8 @@ public class JGitFileSystemImplProviderWithFoldersTest extends AbstractTestInfra
         outStream.write(("my cool content").getBytes());
         outStream.close();
 
-        assertThat(new File(provider.getGitRepoContainerDir(),
-                            "test/old" + ".git")).exists();
+//        assertThat(new File(provider.getGitRepoContainerDir(),
+//                            "test/old" + ".git")).exists();
 
         int commitsCount = 0;
         for (RevCommit com : ((GitImpl) fs.getGit())._log().all().call()) {

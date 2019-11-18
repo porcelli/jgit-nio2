@@ -49,9 +49,20 @@ public class JGitFileSystemBuilderTest {
 
     @Test
     public void testBuilderWithGitDaemon() throws IOException {
+
         try (final GitDaemon daemon = DaemonBuilder.buildGitDaemon()) {
-            final FileSystem fs = JGitFileSystemBuilder.newFileSystem("myrepo2",
+
+            final FileSystem xfs = JGitFileSystemBuilder.newFileSystem("path/to/myrepoxxx",
+                                                                       Files.createTempDirectory("demo").toString(),
+                                                                       (u) -> true,
+                                                                       daemon);
+
+            System.out.println(((JGitFileSystem) xfs).getGit().getRepository().getDirectory().toString());
+
+            final FileSystem fs = JGitFileSystemBuilder.newFileSystem("path/to/myrepo2",
                                                                       daemon);
+
+            System.out.println(((JGitFileSystem) fs).getGit().getRepository().getDirectory().toString());
 
             Path foo = fs.getPath("/foo");
             Files.createDirectory(foo);

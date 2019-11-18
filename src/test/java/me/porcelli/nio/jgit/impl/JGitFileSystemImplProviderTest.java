@@ -837,7 +837,7 @@ public class JGitFileSystemImplProviderTest extends AbstractTestInfra {
         final File doraRepoDir = ((JGitFileSystemProxy) doraFS).getGit().getRepository().getDirectory();
 
         final File parentDir = doraRepoDir.getParentFile();
-        final File gitProviderDir = provider.getGitRepoContainerDir();
+//        final File gitProviderDir = provider.getGitRepoContainerDir();
 
         final URI doraRepo1 = URI.create("git://parentDir/dora-repo1");
         FileSystem doraFS1 = provider.newFileSystem(doraRepo1,
@@ -851,12 +851,12 @@ public class JGitFileSystemImplProviderTest extends AbstractTestInfra {
         provider.delete(doraFS.getPath(null));
         assertFalse(doraRepoDir.exists());
         assertTrue(parentDir.exists());
-        assertTrue(gitProviderDir.exists());
+//        assertTrue(gitProviderDir.exists());
 
         provider.delete(doraFS1.getPath(null));
         assertFalse(dora1RepoDir.exists());
         assertTrue(parentDir1.exists());
-        assertTrue(gitProviderDir.exists());
+//        assertTrue(gitProviderDir.exists());
     }
 
     @Test

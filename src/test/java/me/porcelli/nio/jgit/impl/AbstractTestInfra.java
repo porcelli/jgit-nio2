@@ -65,6 +65,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static java.util.stream.Collectors.toMap;
+import static me.porcelli.nio.jgit.impl.JGitFileSystemProviderConfiguration.REPOSITORIES_CONTAINER_DIR;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public abstract class AbstractTestInfra {
@@ -91,9 +92,7 @@ public abstract class AbstractTestInfra {
 
     @Before
     public void createGitFsProvider() throws IOException {
-//        provider = new JGitFileSystemProvider(getGitPreferences());
         provider = JGitFileSystemProvider.PROVIDER;
-        getGitPreferences();
     }
 
     /*
@@ -113,9 +112,11 @@ public abstract class AbstractTestInfra {
 
         provider.shutdown();
 
-        if (provider.getGitRepoContainerDir() != null && provider.getGitRepoContainerDir().exists()) {
-            FileUtils.delete(provider.getGitRepoContainerDir(),
+        try {
+            FileUtils.delete(new File(REPOSITORIES_CONTAINER_DIR),
                              FileUtils.RECURSIVE);
+            System.out.println("cleaned!");
+        } catch (final IOException ignore){
         }
     }
 

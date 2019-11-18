@@ -14,6 +14,7 @@ import me.porcelli.nio.jgit.security.FileSystemAuthorization;
 import static me.porcelli.nio.jgit.impl.JGitFileSystemProvider.PROVIDER;
 import static me.porcelli.nio.jgit.impl.JGitFileSystemProviderConfiguration.GIT_ENV_KEY_AUTHZ_PROVIDER;
 import static me.porcelli.nio.jgit.impl.JGitFileSystemProviderConfiguration.GIT_ENV_KEY_DEFAULT_REMOTE_NAME;
+import static me.porcelli.nio.jgit.impl.JGitFileSystemProviderConfiguration.GIT_ENV_KEY_DEST_PATH;
 import static me.porcelli.nio.jgit.impl.JGitFileSystemProviderConfiguration.GIT_ENV_KEY_FULL_HOST_NAMES;
 
 public final class JGitFileSystemBuilder {
@@ -36,9 +37,19 @@ public final class JGitFileSystemBuilder {
     public static FileSystem newFileSystem(final String repoName,
                                            final FileSystemAuthorization authorization,
                                            final Daemon... daemons) throws IOException {
+        return newFileSystem(repoName, null, authorization, daemons);
+    }
+
+    public static FileSystem newFileSystem(final String repoName,
+                                           final String dir,
+                                           final FileSystemAuthorization authorization,
+                                           final Daemon... daemons) throws IOException {
         final Map env = new HashMap<>(DEFAULT_OPTIONS);
         env.put(GIT_ENV_KEY_FULL_HOST_NAMES, buildHostNames(daemons));
         env.put(GIT_ENV_KEY_AUTHZ_PROVIDER, authorization);
+        if (dir != null) {
+            env.put(GIT_ENV_KEY_DEST_PATH, dir);
+        }
         final FileSystem fs = newFileSystem(repoName, env);
         for (Daemon daemon : daemons) {
             ((DaemonImpl) daemon).accept((JGitFileSystem) fs);
@@ -46,10 +57,10 @@ public final class JGitFileSystemBuilder {
         return fs;
     }
 
-    public static FileSystem newFileSystem(final String repoName,
-                                           final Map env) throws IOException {
-        return PROVIDER.newFileSystem(URI.create("git://" + repoName),
-                                      env);
+    private static FileSystem newFileSystem(final String _repoName,
+                                            final Map env) throws IOException {
+        final String repoName = _repoName.replaceAll("\\\\", "/");
+        return PROVIDER.newFileSystem(URI.create("git://" + repoName), env);
     }
 
     private static Map<String, String> buildHostNames(Daemon[] daemons) {

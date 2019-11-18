@@ -45,11 +45,13 @@ import java.nio.file.FileStore;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystemAlreadyExistsException;
 import java.nio.file.FileSystemNotFoundException;
+import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.NotDirectoryException;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.WatchEvent;
 import java.nio.file.attribute.BasicFileAttributeView;
@@ -75,8 +77,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-
-import javax.servlet.http.HttpServletRequest;
 
 import me.porcelli.nio.jgit.fs.AmbiguousFileSystemNameException;
 import me.porcelli.nio.jgit.fs.FileSystemState;
@@ -105,7 +105,6 @@ import me.porcelli.nio.jgit.impl.op.model.PathInfo;
 import me.porcelli.nio.jgit.impl.op.model.PathType;
 import me.porcelli.nio.jgit.impl.op.model.RevertCommitContent;
 import me.porcelli.nio.jgit.impl.util.EncodingUtil;
-import me.porcelli.nio.jgit.security.AuthenticationService;
 import me.porcelli.nio.jgit.security.FileSystemAuthorization;
 import me.porcelli.nio.jgit.security.User;
 import org.eclipse.jgit.diff.DiffEntry;
@@ -131,7 +130,6 @@ import org.slf4j.LoggerFactory;
 import static java.nio.file.StandardOpenOption.READ;
 import static java.nio.file.StandardOpenOption.TRUNCATE_EXISTING;
 import static java.util.Collections.emptyList;
-import static me.porcelli.nio.jgit.impl.JGitFileSystemProviderConfiguration.DEFAULT_SCHEME_SIZE;
 import static me.porcelli.nio.jgit.impl.JGitFileSystemProviderConfiguration.GIT_ENV_KEY_AUTHZ_PROVIDER;
 import static me.porcelli.nio.jgit.impl.JGitFileSystemProviderConfiguration.GIT_ENV_KEY_BRANCH_LIST;
 import static me.porcelli.nio.jgit.impl.JGitFileSystemProviderConfiguration.GIT_ENV_KEY_DEFAULT_REMOTE_NAME;
@@ -142,6 +140,7 @@ import static me.porcelli.nio.jgit.impl.JGitFileSystemProviderConfiguration.GIT_
 import static me.porcelli.nio.jgit.impl.JGitFileSystemProviderConfiguration.GIT_ENV_KEY_PASSWORD;
 import static me.porcelli.nio.jgit.impl.JGitFileSystemProviderConfiguration.GIT_ENV_KEY_SUBDIRECTORY;
 import static me.porcelli.nio.jgit.impl.JGitFileSystemProviderConfiguration.GIT_ENV_KEY_USER_NAME;
+import static me.porcelli.nio.jgit.impl.JGitFileSystemProviderConfiguration.REPOSITORIES_CONTAINER_DIR;
 import static me.porcelli.nio.jgit.impl.JGitFileSystemProviderConfiguration.SCHEME;
 import static me.porcelli.nio.jgit.impl.JGitFileSystemProviderConfiguration.SCHEME_SIZE;
 import static me.porcelli.nio.jgit.impl.op.model.PathType.DIRECTORY;
@@ -149,7 +148,6 @@ import static me.porcelli.nio.jgit.impl.op.model.PathType.NOT_FOUND;
 import static me.porcelli.nio.jgit.impl.util.Preconditions.checkCondition;
 import static me.porcelli.nio.jgit.impl.util.Preconditions.checkNotEmpty;
 import static me.porcelli.nio.jgit.impl.util.Preconditions.checkNotNull;
-import static org.eclipse.jgit.lib.Constants.DOT_GIT_EXT;
 
 public class JGitFileSystemProvider extends FileSystemProvider implements Closeable {
 
@@ -166,8 +164,6 @@ public class JGitFileSystemProvider extends FileSystemProvider implements Closea
     final KetchSystem system = new KetchSystem();
 
     final KetchLeaderCache leaders = new KetchLeaderCache(system);
-
-    private AuthenticationService httpAuthenticator;
 
     JGitFileSystemProviderConfiguration config;
 
@@ -282,9 +278,10 @@ public class JGitFileSystemProvider extends FileSystemProvider implements Closea
     }
 
     private User extractUser(Object client) {
-        if (httpAuthenticator != null && client instanceof HttpServletRequest) {
-            return httpAuthenticator.getUser();
-        } else if (client instanceof BaseGitCommand) {
+//        if (httpAuthenticator != null && client instanceof HttpServletRequest) {
+//            return httpAuthenticator.getUser();
+        /*        } else */
+        if (client instanceof BaseGitCommand) {
             return ((BaseGitCommand) client).getUser();
         }
 
@@ -348,13 +345,6 @@ public class JGitFileSystemProvider extends FileSystemProvider implements Closea
         fsManager.clear();
     }
 
-    /**
-     * Returns the directory that contains all the git repositories managed by this file system provider.
-     */
-    public File getGitRepoContainerDir() {
-        return config.getGitReposParentDir();
-    }
-
     @Override
     public String getScheme() {
         return SCHEME;
@@ -380,12 +370,10 @@ public class JGitFileSystemProvider extends FileSystemProvider implements Closea
 
         validateFSName(uri, fsName);
 
-        final String envUsername = extractEnvProperty(GIT_ENV_KEY_USER_NAME,
-                                                      env);
-        final String envPassword = extractEnvProperty(GIT_ENV_KEY_PASSWORD,
-                                                      env);
-        final Map<String, String> fullHostNames = extractMapProperty(GIT_ENV_KEY_FULL_HOST_NAMES,
-                                                                     env);
+        final String envUsername = extractEnvProperty(GIT_ENV_KEY_USER_NAME, env);
+        final String envPassword = extractEnvProperty(GIT_ENV_KEY_PASSWORD, env);
+        final Map<String, String> fullHostNames = extractMapProperty(GIT_ENV_KEY_FULL_HOST_NAMES, env);
+
         final FileSystemAuthorization authorization;
         if (env.containsKey(GIT_ENV_KEY_AUTHZ_PROVIDER)) {
             authorization = (FileSystemAuthorization) env.get(GIT_ENV_KEY_AUTHZ_PROVIDER);
@@ -447,6 +435,9 @@ public class JGitFileSystemProvider extends FileSystemProvider implements Closea
 
     private void validateFSName(URI uri,
                                 String fsName) {
+        if (fsName.contains(".")) {
+            throw new IllegalArgumentException("Invalid file system name [" + fsName + "]");
+        }
         if (fsManager.containsKey(fsName)) {
             throw new FileSystemAlreadyExistsException("There is already a FS for " + uri + ".");
         }
@@ -484,27 +475,29 @@ public class JGitFileSystemProvider extends FileSystemProvider implements Closea
         return (Map<String, String>) env.get(key);
     }
 
-    protected Git createNewGitRepo(Map<String, ?> env,
-                                   String fsName) {
+    protected Git createNewGitRepo(final Map env,
+                                   final String fsName) {
+        final String _destinationDir = extractEnvProperty(GIT_ENV_KEY_DEST_PATH, env);
+        final String destinationDir;
+        if (_destinationDir == null){
+            destinationDir = new File(REPOSITORIES_CONTAINER_DIR).getAbsolutePath();
+        } else {
+            destinationDir = _destinationDir;
+        }
 
-        final File repoDest = getRepoDest(env,
-                                          fsName);
-
-        File directory = repoDest.getParentFile();
+        final File storage = new File(destinationDir, fsName + ".git");
+        File directory = storage.getParentFile();
         String lockName = directory.getName();
 
         if (!directory.exists()) {
             directory.mkdirs();
         }
 
-        FileSystemLock physicalLock = createLock(directory,
-                                                 lockName);
+        final FileSystemLock physicalLock = createLock(directory, lockName);
         try {
             physicalLock.lock();
 
-            return createNewGitRepo(env,
-                                    fsName,
-                                    repoDest);
+            return createNewGitRepo(env, fsName, storage);
         } finally {
             physicalLock.unlock();
         }
@@ -515,24 +508,20 @@ public class JGitFileSystemProvider extends FileSystemProvider implements Closea
                                    File repoDest) {
         final Git git;
 
-        String envUsername = extractEnvProperty(GIT_ENV_KEY_USER_NAME,
-                                                env);
-        String envPassword = extractEnvProperty(GIT_ENV_KEY_PASSWORD,
-                                                env);
-        Boolean envMirror = (Boolean) env.get(GIT_ENV_KEY_MIRROR);
-        boolean isMirror = envMirror == null ? true : envMirror;
+        final String envUsername = extractEnvProperty(GIT_ENV_KEY_USER_NAME, env);
+        final String envPassword = extractEnvProperty(GIT_ENV_KEY_PASSWORD, env);
+        final Boolean envMirror = (Boolean) env.get(GIT_ENV_KEY_MIRROR);
+        final boolean isMirror = envMirror == null ? true : envMirror;
 
-        CredentialsProvider credential = buildCredential(envUsername,
-                                                         envPassword);
+        final CredentialsProvider credential = buildCredential(envUsername, envPassword);
 
-        if (syncWithRemote(env,
-                           repoDest)) {
+        if (syncWithRemote(env, repoDest)) {
             final String origin = env.get(GIT_ENV_KEY_DEFAULT_REMOTE_NAME).toString();
             final List<String> branches = (List<String>) env.get(GIT_ENV_KEY_BRANCH_LIST);
             final String subdirectory = (String) env.get(GIT_ENV_KEY_SUBDIRECTORY);
             try {
                 if (this.isForkOrigin(origin)) {
-                    git = Git.fork(this.getGitRepoContainerDir(),
+                    git = Git.fork(repoDest,
                                    origin,
                                    fsName,
                                    branches,
@@ -583,21 +572,6 @@ public class JGitFileSystemProvider extends FileSystemProvider implements Closea
                                                                      LOCK_LAST_ACCESS_THRESHOLD);
     }
 
-    private File getRepoDest(Map<String, ?> env,
-                             String fsName) {
-        final String outPath = (String) env.get(GIT_ENV_KEY_DEST_PATH);
-        final File repoDest;
-
-        if (outPath != null) {
-            repoDest = new File(outPath,
-                                fsName + DOT_GIT_EXT);
-        } else {
-            repoDest = new File(config.getGitReposParentDir(),
-                                fsName + DOT_GIT_EXT);
-        }
-        return repoDest;
-    }
-
     private boolean syncWithRemote(Map<String, ?> env,
                                    File repoDest) {
         return env.containsKey(GIT_ENV_KEY_DEFAULT_REMOTE_NAME) && !repoDest.exists();
@@ -605,8 +579,7 @@ public class JGitFileSystemProvider extends FileSystemProvider implements Closea
 
     String extractFSName(final URI _uri) {
         String uri = _uri.toString().replace("git://",
-                                             "").replace("default://",
-                                                         "");
+                                             "");
         if (uri.endsWith("/")) {
             uri = uri.substring(0,
                                 uri.length() - 1);
@@ -734,8 +707,7 @@ public class JGitFileSystemProvider extends FileSystemProvider implements Closea
         pathStr = pathStr.replace(host,
                                   "");
         pathStr = pathStr.replace("git://",
-                                  "").replace("default://",
-                                              "");
+                                  "");
         pathStr = EncodingUtil.decode(pathStr);
         if (pathStr.startsWith("/:")) {
             pathStr = pathStr.substring(2);
@@ -748,8 +720,7 @@ public class JGitFileSystemProvider extends FileSystemProvider implements Closea
         String host = branch + fileSystem.getName();
 
         host = host.replace("git://",
-                            "").replace("default://",
-                                        "");
+                            "");
         return host;
     }
 
@@ -1188,7 +1159,7 @@ public class JGitFileSystemProvider extends FileSystemProvider implements Closea
 
     private void cleanupParentDir(File gitDir) throws IOException {
         final File parentDir = gitDir.getParentFile();
-        if (parentDir.isDirectory() && parentDirIsEmpty(parentDir) && !parentDir.equals(getGitRepoContainerDir())) {
+        if (parentDir.isDirectory() && parentDirIsEmpty(parentDir)) {
             FileUtils.delete(parentDir,
                              FileUtils.RECURSIVE | FileUtils.RETRY);
         }
@@ -2161,10 +2132,7 @@ public class JGitFileSystemProvider extends FileSystemProvider implements Closea
     }
 
     private int getSchemeSize(final URI uri) {
-        if (uri.getScheme().equals(SCHEME)) {
-            return SCHEME_SIZE;
-        }
-        return DEFAULT_SCHEME_SIZE;
+        return SCHEME_SIZE;
     }
 
     private void delete(final JGitPathImpl path,
